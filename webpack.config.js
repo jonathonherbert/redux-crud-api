@@ -55,7 +55,7 @@ var percentage_handler = function handler(percentage, msg) {
 
 var webpack_opts = {
   entry: './src/index.ts',
-  target: 'node',
+  target: 'web',
   output: {
     filename: libPath('index.js'),
     libraryTarget: 'commonjs2'
