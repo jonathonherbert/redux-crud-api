@@ -1,4 +1,4 @@
-[![Coverage Status](https://coveralls.io/repos/<account>/<repository>/badge.svg?branch=master)](https://coveralls.io/r/<account>/<repository>?branch=master)
+[![Coverage Status](https://coveralls.io/repos/jsherbert/redux-crud-api/badge.svg?branch=master)](https://coveralls.io/r/jsherbert/redux-crud-api?branch=master)
 
 # redux-crud-api
 

@@ -286,7 +286,6 @@ function createAPIAction({
 			}
 
 			// Call reject for the Promise caller
-			console.error('Error in API resource', e)
 			yield call(reject, e.message)
 		}
 	}
