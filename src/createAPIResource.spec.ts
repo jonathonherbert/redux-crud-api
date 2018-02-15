@@ -232,11 +232,9 @@ describe('(Util) asyncActionCreator', () => {
 
 			// Deal with the promise returned by the fetch .json() call
 			expect(iterator.next(arrayResponse).value).toEqual(apply(arrayResponse, arrayResponse.json))
-
 			// Dispatch the success action
 			expect(iterator.next(arrayResponse.json()).value)
 				.toEqual(put(actionCreators.fetchSuccess(arrayResponse.json().data)))
-
 			// Resolve the caller Promise via the action meta
 			expect(iterator.next().value).toEqual(call(noop, arrayResponse.json().data))
 		})

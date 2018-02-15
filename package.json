@@ -1,7 +1,7 @@
 {
-  "name": "ts-library-starter",
+  "name": "redux-crud-api",
   "version": "0.1.0",
-  "description": "Example git project that is used for typescript libraries as a starter pack",
+  "description": "Boilerplate-free CRUD API operations with Redux",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "jam": {
@@ -16,6 +16,7 @@
     "test:watch": "npm test -- --watch",
     "coverage": "npm test -- --coverage --no-cache",
     "coverage:watch": "npm run coverage -- --watch",
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
     "prepare": "npm run build && npm test",
     "release": "standard-version && npm pack"
   },
@@ -24,21 +25,13 @@
     "url": "git+https://github.com/DxCx/ts-library-starter.git"
   },
   "keywords": [
-    "example",
     "typescript",
     "library",
-    "starter",
-    "webpack",
-    "browserify",
-    "dts-bundle",
-    "package",
-    "tslint",
-    "jest",
-    "tsloader",
-    "boilerplate",
-    "ts-loader"
+    "redux",
+    "redux-crud",
+    "redux-saga"
   ],
-  "author": "Hagai Cohen",
+  "author": "Jonathon Herbert",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/DxCx/ts-library-starter/issues"
@@ -48,6 +41,7 @@
     "@types/jest": "^20.0.7",
     "@types/node": "^8.0.24",
     "browserify": "^14.4.0",
+    "coveralls": "^3.0.0",
     "delete-empty": "^1.0.1",
     "dts-bundle": "^0.7.3",
     "jest": "^20.0.4",

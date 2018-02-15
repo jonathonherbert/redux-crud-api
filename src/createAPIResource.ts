@@ -232,7 +232,6 @@ function createAPIAction({
 				// It'd be good to let the user provide an envelope.
 				const json = yield apply(response, response.json)
 				data = json.data ? json.data : json
-
 				// Apply transforms
 				const dataIsArray = Array.isArray(data)
 				if (dataIsArray) {
@@ -400,8 +399,8 @@ function createAPIResource({
 	selectAuthToken,
 	relations,
 	options = {
-		transformIn: noop,
-		transformOut: noop
+		transformIn: identity,
+		transformOut: identity
 	}
 }: ICreateAPIResourceOptions) {
 	const actionCreators = reduxCrud.actionCreatorsFor(resourceName)
