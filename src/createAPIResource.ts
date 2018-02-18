@@ -11,7 +11,7 @@ import reduxCrud from 'redux-crud'
 import { takeLatest } from 'redux-saga'
 import { apply, call, put, select } from 'redux-saga/effects'
 import v4 from 'uuid/v4'
-import fetch from 'whatwg-fetch'
+import 'whatwg-fetch'
 
 import { createPromiseAction } from './utils/saga'
 

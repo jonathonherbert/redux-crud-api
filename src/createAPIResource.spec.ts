@@ -77,12 +77,12 @@ const invalidAPIResponse = {
 	status: 400
 }
 
-const transformOut = resource => {
-	return {...resource, exampleJson: JSON.stringify(resource.exampleJson)}
+const transformOut = localResource => {
+	return {...localResource, exampleJson: JSON.stringify(localResource.exampleJson)}
 }
 
-const transformIn = resource => {
-	return {...resource, exampleJson: JSON.parse(resource.exampleJson)}
+const transformIn = localResource => {
+	return {...localResource, exampleJson: JSON.parse(localResource.exampleJson)}
 }
 
 const relationSchema = new schema.Entity('relation')
