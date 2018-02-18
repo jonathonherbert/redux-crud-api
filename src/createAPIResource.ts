@@ -22,7 +22,7 @@ const mapActionToCRUDAction = {
 	fetch: 'fetch',
 	search: 'fetch',
 	update: 'update',
-};
+} as {[action: string]: string}
 
 // The names we use for actions also must map to the http methods.
 const mapActionToHTTPMethod = {
@@ -31,7 +31,7 @@ const mapActionToHTTPMethod = {
 	del: 'delete',
 	fetch: 'get',
 	search: 'get',
-}
+} as {[action: string]: string}
 
 // The default actions available.
 const availableActions = ['create', 'update', 'del', 'fetch', 'search']

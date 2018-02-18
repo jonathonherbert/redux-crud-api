@@ -9,12 +9,12 @@ import 'whatwg-fetch'
 
 import createAPIResource from './createAPIResource'
 
-let modelResource
-let modelResourceWithTransforms
-let relationResource
+let modelResource: any
+let modelResourceWithTransforms: any
+let relationResource: any
 let actionTypes
-let actionCreators
-let relationActionCreators
+let actionCreators: any
+let relationActionCreators: any
 const baseUrl = '/api'
 const resourceName = 'model'
 const errorMessage = 'HTTP Error: 400'
@@ -77,11 +77,11 @@ const invalidAPIResponse = {
 	status: 400
 }
 
-const transformOut = localResource => {
+const transformOut = (localResource: any) => {
 	return {...localResource, exampleJson: JSON.stringify(localResource.exampleJson)}
 }
 
-const transformIn = localResource => {
+const transformIn = (localResource: any) => {
 	return {...localResource, exampleJson: JSON.parse(localResource.exampleJson)}
 }
 
@@ -213,8 +213,8 @@ describe('(Util) asyncActionCreator', () => {
 			expect(modelResource.selectors.findByCid(state, 'exampleCid')).toEqual(state[resourceName][4])
 		})
 		it('should have a selector that filters by predicate', () => {
-			expect(modelResource.selectors.filter(state, item => item.id > 2).length).toBe(2)
-			expect(modelResource.selectors.filter(state, item => item.name.includes('example')).length).toBe(3)
+			expect(modelResource.selectors.filter(state, (item: any) => item.id > 2).length).toBe(2)
+			expect(modelResource.selectors.filter(state, (item: any) => item.name.includes('example')).length).toBe(3)
 		})
 		it('should have a selector that returns all of the things', () => {
 			expect(modelResource.selectors.findAll(state)).toEqual(state[resourceName])
