@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "experimentalDecorators": true,
-    "lib": ["es6"],
+    "lib": ["es6", "dom"],
     "module": "commonjs",
     "target": "es5",
     "moduleResolution": "node",
@@ -19,7 +19,7 @@
     ]
   },
   "files": [
-    "src/index.ts"
+    "src/createAPIResource.ts"
   ],
   "exclude": [
     "node_modules"

@@ -1,11 +1,11 @@
-import reduxCrud from 'redux-crud'
-import { call, put, select, apply } from 'redux-saga/effects'
-import { takeLatest } from 'redux-saga'
 import noop from 'lodash/noop'
+import { normalize, schema } from 'normalizr'
 import * as qs from 'querystring'
-import 'whatwg-fetch'
-import { schema, normalize } from 'normalizr'
 import { batchActions } from 'redux-batched-actions'
+import reduxCrud from 'redux-crud'
+import { takeLatest } from 'redux-saga'
+import { apply, call, put, select } from 'redux-saga/effects'
+import 'whatwg-fetch'
 
 import createAPIResource from './createAPIResource'
 
@@ -15,8 +15,8 @@ let relationResource
 let actionTypes
 let actionCreators
 let relationActionCreators
-let baseUrl = '/api'
-let resourceName = 'model'
+const baseUrl = '/api'
+const resourceName = 'model'
 const errorMessage = 'HTTP Error: 400'
 
 const resource = {
@@ -310,7 +310,7 @@ describe('(Util) asyncActionCreator', () => {
 			expect(iterator.next('token').value).toEqual(call(fetch, '/api/model/1', {
 				method: 'GET',
 				headers: new Headers({
-					'Authorization': 'Bearer token'
+					Authorization: 'Bearer token'
 				})
 			}))
 			expect(iterator.next(arrayResponse).value).toEqual(apply(arrayResponse, arrayResponse.json))

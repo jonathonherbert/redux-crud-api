@@ -1,36 +1,36 @@
-import 'whatwg-fetch'
-import { call, put, select, apply } from 'redux-saga/effects'
-import { takeLatest } from 'redux-saga'
 import filter from 'lodash/filter'
 import find from 'lodash/find'
-import kebabCase from 'lodash/kebabCase'
 import identity from 'lodash/identity'
-import orderBy from 'lodash/orderBy'
+import kebabCase from 'lodash/kebabCase'
 import noop from 'lodash/noop'
+import orderBy from 'lodash/orderBy'
 import { normalize, Schema } from 'normalizr'
 import * as qs from 'querystring'
-import reduxCrud from 'redux-crud'
-import v4 from 'uuid/v4'
 import { batchActions } from 'redux-batched-actions'
+import reduxCrud from 'redux-crud'
+import { takeLatest } from 'redux-saga'
+import { apply, call, put, select } from 'redux-saga/effects'
+import v4 from 'uuid/v4'
+import fetch from 'whatwg-fetch'
 
 import { createPromiseAction } from './utils/saga'
 
 // The names we use for actions don't map to the redux-crud action names, so we do that here.
-const mapActionToCRUDAction = <{[id: string]: string}>{
-	'del': 'delete',
-	'search': 'fetch',
-	'create': 'create',
-	'update': 'update',
-	'fetch': 'fetch'
-}
+const mapActionToCRUDAction = {
+	create: 'create',
+	del: 'delete',
+	fetch: 'fetch',
+	search: 'fetch',
+	update: 'update',
+};
 
 // The names we use for actions also must map to the http methods.
-const mapActionToHTTPMethod = <{[id: string]: string}>{
-	'create': 'post',
-	'update': 'put',
-	'del': 'delete',
-	'fetch': 'get',
-	'search': 'get'
+const mapActionToHTTPMethod = {
+	create: 'post',
+	update: 'put',
+	del: 'delete',
+	fetch: 'get',
+	search: 'get',
 }
 
 // The default actions available.
@@ -112,18 +112,18 @@ function createAPIAction({
 	 * 		}
 	 *  }
 	 */
-	return function * ({payload, meta: {resolve, reject}}: IAPIActionOptions) {
+	return function *({ payload, meta: { resolve, reject } }: IAPIActionOptions) {
 		// We store a client id here for optimistic creation
 		let resource
 		let options
 		let cid
-		let relationKeys = <{[relationId: string]: Array<any>}>{}
-		let crudAction = mapActionToCRUDAction[actionName]
+		const relationKeys = {} as {[relationId: string]: any[]}
+		const crudAction = mapActionToCRUDAction[actionName]
 		if (payload) {
-			({resource, options} = payload)
+			({ resource, options } = payload)
 		}
 
-		let localResource = {...resource}
+		let localResource = { ...resource }
 
 		// If we're creating a record, give it the client id if it doesn't have one already
 		if (actionName === 'create') {
@@ -140,7 +140,7 @@ function createAPIAction({
 			if (!modelFromState) {
 				yield call(reject, `Could not select model with id ${resource.id}`)
 			}
-			localResource = {...modelFromState, ...localResource}
+			localResource = { ...modelFromState, ...localResource }
 		}
 
 		// Dispatch our start action, if there is one for the given action
@@ -148,7 +148,7 @@ function createAPIAction({
 			if (relations && (actionName === 'update' || actionName === 'create')) {
 				const schema = Array.isArray(localResource) ? [relations.schema] : relations.schema
 				const normalisedResource = normalize(localResource, schema)
-				for (let i in relations.map) {
+				for (const i in relations.map) {
 					const relationData = normalisedResource.entities[i]
 					if (!relationData) {
 						continue
@@ -157,9 +157,9 @@ function createAPIAction({
 					// When we receive relation updates at the end of the action,
 					// we can replay these keys in order to sync with optimistic updates.
 					relationKeys[i] = []
-					const actions: Array<any> = []
+					const actions: any[] = []
 
-					if (relationData['undefined']) {
+					if (relationData.undefined) {
 						console.warn(`One or more of the relations you\'re trying to ${actionName} is missing an id.\
 							Bad things are likely to happen as a result.`)
 					}
@@ -190,21 +190,23 @@ function createAPIAction({
 		const requestOptions: {
 			method: string,
 			headers: Headers,
-			body?: string|FormData
+			body?: string | FormData,
 		} = {
-			method: method.toUpperCase(),
-			headers: new Headers()
-		}
+				method: method.toUpperCase(),
+				headers: new Headers(),
+			}
 
 		// Add the request body if we're sending data
 		if (method === 'post' || method === 'put') {
 			const contentType = options && options.contentType ? options.contentType : 'application/json'
-			let resourceToSend = transformOut({...localResource})
-			actionName === 'create' && delete resourceToSend.id
+			const resourceToSend = transformOut({ ...localResource })
+			if (actionName === 'create') {
+				delete resourceToSend.id;
+			}
 			if (contentType !== 'multipart/form-data') {
 				requestOptions.headers.append('content-type', contentType)
 			}
-			requestOptions.body = createRequestBody(contentType, resourceToSend)
+			requestOptions.body = createRequestBody(contentType, resourceToSend);
 		}
 
 		if (actionName === 'search') {
@@ -244,7 +246,7 @@ function createAPIAction({
 			// If there aren't any relations or we're not running a fetch or update, do a basic persist
 			if (!relations
 				|| (crudAction !== 'fetch'
-				&& crudAction !== 'update')) {
+					&& crudAction !== 'update')) {
 				if (actionName === 'create') {
 					yield put(actionCreators[crudAction + 'Success'](data, cid))
 				} else {
@@ -255,12 +257,12 @@ function createAPIAction({
 				// operations for each model. We check here to see if the data is an array (collection),
 				// and adjust the schema accordingly.
 				const normalisedData = normalize(data, Array.isArray(data) ? [relations.schema] : relations.schema)
-				for (let i in relations.map) {
+				for (const i in relations.map) {
 					const relationData = normalisedData.entities[i]
 					if (!relationData) {
 						continue
 					}
-					const actions: Array<any> = []
+					const actions: any[] = []
 					Object.keys(relationData).forEach((id, index) => {
 						if (crudAction === 'fetch') {
 							actions.push(relations.map[i][crudAction + 'Success'](relationData[id]))
@@ -288,7 +290,7 @@ function createAPIAction({
 			// Call reject for the Promise caller
 			yield call(reject, e.message)
 		}
-	}
+	};
 }
 
 // Selectors
@@ -305,32 +307,32 @@ function createSelectors(resourceName: string) {
 		/**
 		 * @inheritdocs
 		 */
-		findById: function(state: any, id: string) {
+		findById(state: any, id: string) {
 			return state[resourceName][id] || null
 		},
 
 		/**
 		 * @inheritdocs
 		 */
-		findByCid: function(state: any, cid: string) {
+		findByCid(state: any, cid: string) {
 			return find(state[resourceName], (item: { _cid: string }) => item._cid === cid)
 		},
 
 		/**
 		 * @inheritdocs
 		 */
-		filter: function(state: any, predicate: Function) {
+		filter(state: any, predicate: Function) {
 			return filter(state[resourceName], predicate)
 		},
 
-		orderBy: function(state: any, predicate: any[] | any[][] | Function[] | string[], order: string) {
+		orderBy(state: any, predicate: any[] | any[][] | Function[] | string[], order: string) {
 			return orderBy(state[resourceName], predicate, order)
 		},
 
 		/**
 		 * @inheritdocs
 		 */
-		findAll: function(state: any) {
+		findAll(state: any) {
 			return state[resourceName]
 		}
 	}
@@ -342,7 +344,7 @@ export interface ICreateAPIResourceOptions {
 	// The base url of the resource
 	baseUrl: string
 	// The actions to add to the returned object
-	actions?:  Array<string>,
+	actions?: string[],
 	// Will be used to set basic auth headers
 	selectAuthToken?: (state: any) => string
 	/**
@@ -377,19 +379,7 @@ export interface ICreateAPIResourceOptions {
  * They will dispatch start (where available), success and error actions
  * in turn, making the http request to the API, the idea being, generic CRUD.
  *
- * @returns {IAPIResource} -- this looks like
- * {
- * 	// The action names (constant)
- * 	actionNames: {[actionName]: string}
- *	// The actions that watcher sagas will listen to. They return FSAs.
- * 	actions: {[actionName]: (resource) => {IFSA}}
- *	// The worker sagas responsible for dispatching start, success and error actions,
- *	// and making HTTP requests.
- * 	workers: {[actionName]: () * => void}
- * 	// The watcher saga responsible for listening for actions and
- * 	// triggering workers
- * 	watchers: {[actionName]: () * => void}
- * }
+ * @returns {IAPIResource}
  */
 function createAPIResource({
 	resourceName,
@@ -399,22 +389,22 @@ function createAPIResource({
 	relations,
 	options = {
 		transformIn: identity,
-		transformOut: identity
+		transformOut: identity,
 	}
 }: ICreateAPIResourceOptions) {
 	const actionCreators = reduxCrud.actionCreatorsFor(resourceName)
 	const selectors = createSelectors(resourceName)
 	const apiResource = {
-		workers: <{[action: string]: any}>{},
-		sagas: <{[action: string]: any}>{},
-		actions: <any>actionCreators,
+		workers: {} as { [action: string]: any },
+		sagas: {} as { [action: string]: any },
+		actions: actionCreators as any,
 		actionNames: reduxCrud.actionTypesFor(resourceName),
 		selectors,
 		reducers: reduxCrud.Map.reducersFor(resourceName)
 	}
 
 	// Create a resource for each of our actions
-	actions.forEach(actionName => {
+	actions.forEach((actionName) => {
 		if (!mapActionToHTTPMethod[actionName]) {
 			throw new Error(`Method ${actionName} not supported for resource ${resourceName}`)
 		}
@@ -450,11 +440,11 @@ function createAPIResource({
 		})
 
 		// Create the watcher saga
-		apiResource.sagas[actionName] = function * () {
+		apiResource.sagas[actionName] = function *() {
 			yield call(takeLatest, apiResource.actionNames[actionName], apiResource.workers[actionName])
 		}
-	})
-	return apiResource
+	});
+	return apiResource;
 }
 
 /**
@@ -466,17 +456,17 @@ function createAPIResource({
  */
 function createRequestBody(contentType: string, resource: any) {
 	switch (contentType) {
-	case 'application/json':
-		return JSON.stringify(resource)
-	case 'multipart/form-data':
-		var formData = new FormData()
-		for (let name in resource) {
-			formData.append(name, resource[name])
-		}
-		return formData
-	default:
-		throw new Error(`Could not create request body: there is no handler for content-type: ${contentType}`)
+		case 'application/json':
+			return JSON.stringify(resource);
+		case 'multipart/form-data':
+			const formData = new FormData();
+			for (const name in resource) {
+				formData.append(name, resource[name]);
+			}
+			return formData;
+		default:
+			throw new Error(`Could not create request body: there is no handler for content-type: ${contentType}`);
 	}
 }
 
-export default createAPIResource
+export default createAPIResource;

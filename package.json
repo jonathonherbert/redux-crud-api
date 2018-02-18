@@ -60,6 +60,7 @@
   "dependencies": {
     "@types/lodash": "^4.14.102",
     "normalizr": "^3.2.4",
+    "redux": "^3.7.2",
     "redux-actions": "^2.2.1",
     "redux-batched-actions": "^0.2.1",
     "redux-crud": "^3.2.0",
