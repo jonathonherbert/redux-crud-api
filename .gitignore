@@ -1,4 +1,5 @@
 *
+!dist
 !yarn.lock
 !src/
 !src/**/*
