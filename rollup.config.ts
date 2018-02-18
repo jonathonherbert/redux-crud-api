@@ -16,7 +16,24 @@ export default {
   ],
   sourcemap: true,
   // Indicate here external modules you don't wanna include in your bundle (i.e.: 'lodash')
-  external: [],
+  external: [
+    'normalizr',
+    'redux',
+    'redux-actions',
+    'redux-batched-actions',
+    'redux-crud',
+    'redux-saga',
+    'redux-saga/effects',
+    'uuid/v4',
+    'whatwg-fetch',
+    'lodash',
+    'lodash/filter',
+    'lodash/find',
+    'lodash/identity',
+    'lodash/kebabCase',
+    'lodash/noop',
+    'lodash/orderBy'
+  ],
   watch: {
     include: 'src/**',
   },
@@ -29,8 +46,7 @@ export default {
     // which external modules to include in the bundle
     // https://github.com/rollup/rollup-plugin-node-resolve#usage
     resolve(),
-
     // Resolve source maps to the original source
-    sourceMaps(),
+    sourceMaps()
   ],
 }

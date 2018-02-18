@@ -73,19 +73,20 @@
     "collectCoverage": true,
     "mapCoverage": true
   },
-  "dependencies": {
-    "@types/lodash": "^4.14.102",
-    "normalizr": "^3.2.4",
-    "redux": "^3.7.2",
-    "redux-actions": "^2.2.1",
-    "redux-batched-actions": "^0.2.1",
-    "redux-crud": "^3.2.0",
-    "redux-saga": "^0.16.0",
-    "uuid": "^3.2.1",
-    "whatwg-fetch": "latest"
+  "dependencies": {},
+  "peerDependencies": {
+    "normalizr": "3.x",
+    "redux": "3.x",
+    "redux-actions": "2.x",
+    "redux-batched-actions": "0.2.x",
+    "redux-crud": "3.x",
+    "redux-saga": "0.16.x",
+    "uuid": "3.2.x",
+    "whatwg-fetch": "2.x"
   },
   "devDependencies": {
     "@types/jest": "^22.0.0",
+    "@types/lodash": "^4.14.102",
     "@types/node": "^9.3.0",
     "@types/redux-actions": "^2.2.4",
     "@types/uuid": "^3.4.3",

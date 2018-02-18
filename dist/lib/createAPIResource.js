@@ -1,56 +1,21 @@
 "use strict";
-var __assign = (this && this.__assign) || Object.assign || function(t) {
-    for (var s, i = 1, n = arguments.length; i < n; i++) {
-        s = arguments[i];
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-            t[p] = s[p];
-    }
-    return t;
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var filter_1 = require("lodash/filter");
-var find_1 = require("lodash/find");
-var identity_1 = require("lodash/identity");
-var kebabCase_1 = require("lodash/kebabCase");
-var orderBy_1 = require("lodash/orderBy");
-var normalizr_1 = require("normalizr");
-var qs = require("querystring");
-var redux_batched_actions_1 = require("redux-batched-actions");
-var redux_crud_1 = require("redux-crud");
-var redux_saga_1 = require("redux-saga");
-var effects_1 = require("redux-saga/effects");
-var v4_1 = require("uuid/v4");
+const filter_1 = require("lodash/filter");
+const find_1 = require("lodash/find");
+const identity_1 = require("lodash/identity");
+const kebabCase_1 = require("lodash/kebabCase");
+const orderBy_1 = require("lodash/orderBy");
+const normalizr_1 = require("normalizr");
+const qs = require("querystring");
+const redux_batched_actions_1 = require("redux-batched-actions");
+const redux_crud_1 = require("redux-crud");
+const redux_saga_1 = require("redux-saga");
+const effects_1 = require("redux-saga/effects");
+const v4_1 = require("uuid/v4");
 require("whatwg-fetch");
-var saga_1 = require("./utils/saga");
+const saga_1 = require("./utils/saga");
 // The names we use for actions don't map to the redux-crud action names, so we do that here.
-var mapActionToCRUDAction = {
+const mapActionToCRUDAction = {
     create: 'create',
     del: 'delete',
     fetch: 'fetch',
@@ -58,7 +23,7 @@ var mapActionToCRUDAction = {
     update: 'update',
 };
 // The names we use for actions also must map to the http methods.
-var mapActionToHTTPMethod = {
+const mapActionToHTTPMethod = {
     create: 'post',
     update: 'put',
     del: 'delete',
@@ -66,15 +31,14 @@ var mapActionToHTTPMethod = {
     search: 'get',
 };
 // The default actions available.
-var availableActions = ['create', 'update', 'del', 'fetch', 'search'];
+const availableActions = ['create', 'update', 'del', 'fetch', 'search'];
 /**
  * Creates a saga that handles API operations.
  * Updates optimistically when updating or creating.
  *
  * @param {ICreateAPIActionOptions}
  */
-function createAPIAction(_a) {
-    var resourceName = _a.resourceName, baseUrl = _a.baseUrl, actionCreators = _a.actionCreators, actionName = _a.actionName, method = _a.method, selectAuthToken = _a.selectAuthToken, selectors = _a.selectors, relations = _a.relations, transformIn = _a.transformIn, transformOut = _a.transformOut;
+function createAPIAction({ resourceName, baseUrl, actionCreators, actionName, method, selectAuthToken, selectors, relations, transformIn, transformOut }) {
     /**
      * Generator for the given action.
      * Accepts FSA containing a payload with property 'resource' containing request data.
@@ -96,242 +60,174 @@ function createAPIAction(_a) {
      * 		}
      *  }
      */
-    return function (_a) {
-        var payload = _a.payload, _b = _a.meta, resolve = _b.resolve, reject = _b.reject;
-        var resource, options, cid, relationKeys, crudAction, localResource, modelFromState, schema, normalisedResource, _loop_1, _c, _d, _i, i, requestString, requestOptions, contentType, resourceToSend, token, response, data, json, dataIsArray, normalisedData, _loop_2, _e, _f, _g, i, e_1;
-        return __generator(this, function (_h) {
-            switch (_h.label) {
-                case 0:
-                    relationKeys = {};
-                    crudAction = mapActionToCRUDAction[actionName];
-                    if (payload) {
-                        (resource = payload.resource, options = payload.options);
+    return function* ({ payload, meta: { resolve, reject } }) {
+        // We store a client id here for optimistic creation
+        let resource;
+        let options;
+        let cid;
+        const relationKeys = {};
+        const crudAction = mapActionToCRUDAction[actionName];
+        if (payload) {
+            ({ resource, options } = payload);
+        }
+        let localResource = Object.assign({}, resource);
+        // If we're creating a record, give it the client id if it doesn't have one already
+        if (actionName === 'create') {
+            if (localResource.id) {
+                cid = localResource.id;
+            }
+            else {
+                cid = localResource.id = v4_1.default();
+            }
+        }
+        // If we're updating a model, merge it with what's current in the state
+        if (actionName === 'update') {
+            const modelFromState = yield effects_1.select(selectors.findById, localResource.id);
+            if (!modelFromState) {
+                yield effects_1.call(reject, `Could not select model with id ${resource.id}`);
+            }
+            localResource = Object.assign({}, modelFromState, localResource);
+        }
+        // Dispatch our start action, if there is one for the given action
+        if (resource && actionCreators[crudAction + 'Start']) {
+            if (relations && (actionName === 'update' || actionName === 'create')) {
+                const schema = Array.isArray(localResource) ? [relations.schema] : relations.schema;
+                const normalisedResource = normalizr_1.normalize(localResource, schema);
+                for (const i in relations.map) {
+                    const relationData = normalisedResource.entities[i];
+                    if (!relationData) {
+                        continue;
                     }
-                    localResource = __assign({}, resource);
-                    // If we're creating a record, give it the client id if it doesn't have one already
-                    if (actionName === 'create') {
-                        if (localResource.id) {
-                            cid = localResource.id;
+                    // We store relation keys (cids) in order here.
+                    // When we receive relation updates at the end of the action,
+                    // we can replay these keys in order to sync with optimistic updates.
+                    relationKeys[i] = [];
+                    const actions = [];
+                    if (relationData.undefined) {
+                        console.warn(`One or more of the relations you\'re trying to ${actionName} is missing an id.\
+							Bad things are likely to happen as a result.`);
+                    }
+                    Object.keys(relationData).forEach(id => {
+                        relationKeys[i].push(id);
+                        actions.push(relations.map[i][crudAction + 'Start'](relationData[id]));
+                    });
+                    yield effects_1.put(redux_batched_actions_1.batchActions(actions));
+                }
+            }
+            else {
+                yield effects_1.put(actionCreators[crudAction + 'Start'](localResource));
+            }
+        }
+        // Build the request string
+        let requestString = `${baseUrl}/${kebabCase_1.default(resourceName)}`;
+        // If we have a specific resource or request type, append it to request URL
+        if ((method === 'get' && actionName !== 'search' && localResource.id) || method === 'delete' || method === 'put') {
+            requestString += `/${localResource.id}`;
+        }
+        if (actionName === 'search') {
+            requestString += '/search';
+        }
+        if (options && options.endpoint) {
+            requestString += `/${options.endpoint}`;
+        }
+        const requestOptions = {
+            method: method.toUpperCase(),
+            headers: new Headers(),
+        };
+        // Add the request body if we're sending data
+        if (method === 'post' || method === 'put') {
+            const contentType = options && options.contentType ? options.contentType : 'application/json';
+            const resourceToSend = transformOut(Object.assign({}, localResource));
+            if (actionName === 'create') {
+                delete resourceToSend.id;
+            }
+            if (contentType !== 'multipart/form-data') {
+                requestOptions.headers.append('content-type', contentType);
+            }
+            requestOptions.body = createRequestBody(contentType, resourceToSend);
+        }
+        if (actionName === 'search') {
+            requestString += `?${qs.stringify(localResource)}`;
+        }
+        // Add the authentication code to the header, if we have a selector
+        if (selectAuthToken) {
+            const token = yield effects_1.select(selectAuthToken);
+            requestOptions.headers.append('Authorization', `Bearer ${token}`);
+        }
+        // Make the request and handle the response
+        try {
+            const response = yield effects_1.call(fetch, requestString, requestOptions);
+            if (response.status < 200 || response.status > 299) {
+                throw new Error(`HTTP Error: ${response.status}`);
+            }
+            let data;
+            if (actionName === 'del') {
+                data = localResource;
+            }
+            else {
+                // We take the data from the 'data' envelope, if it exists,
+                // or from the json directly if it doesn't.
+                // It'd be good to let the user provide an envelope.
+                const json = yield effects_1.apply(response, response.json);
+                data = json.data ? json.data : json;
+                // Apply transforms
+                const dataIsArray = Array.isArray(data);
+                if (dataIsArray) {
+                    data = data.map((item) => transformIn(item));
+                }
+                else {
+                    data = transformIn(data);
+                }
+            }
+            // If there aren't any relations or we're not running a fetch or update, do a basic persist
+            if (!relations
+                || (crudAction !== 'fetch'
+                    && crudAction !== 'update')) {
+                if (actionName === 'create') {
+                    yield effects_1.put(actionCreators[crudAction + 'Success'](data, cid));
+                }
+                else {
+                    yield effects_1.put(actionCreators[crudAction + 'Success'](data));
+                }
+            }
+            else {
+                // If we do have relations, normalise the incoming data, and dispatch persist
+                // operations for each model. We check here to see if the data is an array (collection),
+                // and adjust the schema accordingly.
+                const normalisedData = normalizr_1.normalize(data, Array.isArray(data) ? [relations.schema] : relations.schema);
+                for (const i in relations.map) {
+                    const relationData = normalisedData.entities[i];
+                    if (!relationData) {
+                        continue;
+                    }
+                    const actions = [];
+                    Object.keys(relationData).forEach((id, index) => {
+                        if (crudAction === 'fetch') {
+                            actions.push(relations.map[i][crudAction + 'Success'](relationData[id]));
                         }
                         else {
-                            cid = localResource.id = v4_1.default();
+                            // We use the previously stored cid to reconcile updates here.
+                            // It's imperative that relations come back in the same order they went out!
+                            actions.push(relations.map[i][crudAction + 'Success'](relationData[id], relationKeys[i] ? relationKeys[i][index] : null));
                         }
-                    }
-                    if (!(actionName === 'update')) return [3 /*break*/, 4];
-                    return [4 /*yield*/, effects_1.select(selectors.findById, localResource.id)];
-                case 1:
-                    modelFromState = _h.sent();
-                    if (!!modelFromState) return [3 /*break*/, 3];
-                    return [4 /*yield*/, effects_1.call(reject, "Could not select model with id " + resource.id)];
-                case 2:
-                    _h.sent();
-                    _h.label = 3;
-                case 3:
-                    localResource = __assign({}, modelFromState, localResource);
-                    _h.label = 4;
-                case 4:
-                    if (!(resource && actionCreators[crudAction + 'Start'])) return [3 /*break*/, 11];
-                    if (!(relations && (actionName === 'update' || actionName === 'create'))) return [3 /*break*/, 9];
-                    schema = Array.isArray(localResource) ? [relations.schema] : relations.schema;
-                    normalisedResource = normalizr_1.normalize(localResource, schema);
-                    _loop_1 = function (i) {
-                        var relationData, actions;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    relationData = normalisedResource.entities[i];
-                                    if (!relationData) {
-                                        return [2 /*return*/, "continue"];
-                                    }
-                                    // We store relation keys (cids) in order here.
-                                    // When we receive relation updates at the end of the action,
-                                    // we can replay these keys in order to sync with optimistic updates.
-                                    relationKeys[i] = [];
-                                    actions = [];
-                                    if (relationData.undefined) {
-                                        console.warn("One or more of the relations you're trying to " + actionName + " is missing an id.\t\t\t\t\t\t\tBad things are likely to happen as a result.");
-                                    }
-                                    Object.keys(relationData).forEach(function (id) {
-                                        relationKeys[i].push(id);
-                                        actions.push(relations.map[i][crudAction + 'Start'](relationData[id]));
-                                    });
-                                    return [4 /*yield*/, effects_1.put(redux_batched_actions_1.batchActions(actions))];
-                                case 1:
-                                    _a.sent();
-                                    return [2 /*return*/];
-                            }
-                        });
-                    };
-                    _c = [];
-                    for (_d in relations.map)
-                        _c.push(_d);
-                    _i = 0;
-                    _h.label = 5;
-                case 5:
-                    if (!(_i < _c.length)) return [3 /*break*/, 8];
-                    i = _c[_i];
-                    return [5 /*yield**/, _loop_1(i)];
-                case 6:
-                    _h.sent();
-                    _h.label = 7;
-                case 7:
-                    _i++;
-                    return [3 /*break*/, 5];
-                case 8: return [3 /*break*/, 11];
-                case 9: return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Start'](localResource))];
-                case 10:
-                    _h.sent();
-                    _h.label = 11;
-                case 11:
-                    requestString = baseUrl + "/" + kebabCase_1.default(resourceName);
-                    // If we have a specific resource or request type, append it to request URL
-                    if ((method === 'get' && actionName !== 'search' && localResource.id) || method === 'delete' || method === 'put') {
-                        requestString += "/" + localResource.id;
-                    }
-                    if (actionName === 'search') {
-                        requestString += '/search';
-                    }
-                    if (options && options.endpoint) {
-                        requestString += "/" + options.endpoint;
-                    }
-                    requestOptions = {
-                        method: method.toUpperCase(),
-                        headers: new Headers(),
-                    };
-                    // Add the request body if we're sending data
-                    if (method === 'post' || method === 'put') {
-                        contentType = options && options.contentType ? options.contentType : 'application/json';
-                        resourceToSend = transformOut(__assign({}, localResource));
-                        if (actionName === 'create') {
-                            delete resourceToSend.id;
-                        }
-                        if (contentType !== 'multipart/form-data') {
-                            requestOptions.headers.append('content-type', contentType);
-                        }
-                        requestOptions.body = createRequestBody(contentType, resourceToSend);
-                    }
-                    if (actionName === 'search') {
-                        requestString += "?" + qs.stringify(localResource);
-                    }
-                    if (!selectAuthToken) return [3 /*break*/, 13];
-                    return [4 /*yield*/, effects_1.select(selectAuthToken)];
-                case 12:
-                    token = _h.sent();
-                    requestOptions.headers.append('Authorization', "Bearer " + token);
-                    _h.label = 13;
-                case 13:
-                    _h.trys.push([13, 28, , 34]);
-                    return [4 /*yield*/, effects_1.call(fetch, requestString, requestOptions)];
-                case 14:
-                    response = _h.sent();
-                    if (response.status < 200 || response.status > 299) {
-                        throw new Error("HTTP Error: " + response.status);
-                    }
-                    data = void 0;
-                    if (!(actionName === 'del')) return [3 /*break*/, 15];
-                    data = localResource;
-                    return [3 /*break*/, 17];
-                case 15: return [4 /*yield*/, effects_1.apply(response, response.json)];
-                case 16:
-                    json = _h.sent();
-                    data = json.data ? json.data : json;
-                    dataIsArray = Array.isArray(data);
-                    if (dataIsArray) {
-                        data = data.map(function (item) { return transformIn(item); });
-                    }
-                    else {
-                        data = transformIn(data);
-                    }
-                    _h.label = 17;
-                case 17:
-                    if (!(!relations
-                        || (crudAction !== 'fetch'
-                            && crudAction !== 'update'))) return [3 /*break*/, 22];
-                    if (!(actionName === 'create')) return [3 /*break*/, 19];
-                    return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Success'](data, cid))];
-                case 18:
-                    _h.sent();
-                    return [3 /*break*/, 21];
-                case 19: return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Success'](data))];
-                case 20:
-                    _h.sent();
-                    _h.label = 21;
-                case 21: return [3 /*break*/, 26];
-                case 22:
-                    normalisedData = normalizr_1.normalize(data, Array.isArray(data) ? [relations.schema] : relations.schema);
-                    _loop_2 = function (i) {
-                        var relationData, actions;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    relationData = normalisedData.entities[i];
-                                    if (!relationData) {
-                                        return [2 /*return*/, "continue"];
-                                    }
-                                    actions = [];
-                                    Object.keys(relationData).forEach(function (id, index) {
-                                        if (crudAction === 'fetch') {
-                                            actions.push(relations.map[i][crudAction + 'Success'](relationData[id]));
-                                        }
-                                        else {
-                                            // We use the previously stored cid to reconcile updates here.
-                                            // It's imperative that relations come back in the same order they went out!
-                                            actions.push(relations.map[i][crudAction + 'Success'](relationData[id], relationKeys[i] ? relationKeys[i][index] : null));
-                                        }
-                                    });
-                                    return [4 /*yield*/, effects_1.put(redux_batched_actions_1.batchActions(actions))];
-                                case 1:
-                                    _a.sent();
-                                    return [2 /*return*/];
-                            }
-                        });
-                    };
-                    _e = [];
-                    for (_f in relations.map)
-                        _e.push(_f);
-                    _g = 0;
-                    _h.label = 23;
-                case 23:
-                    if (!(_g < _e.length)) return [3 /*break*/, 26];
-                    i = _e[_g];
-                    return [5 /*yield**/, _loop_2(i)];
-                case 24:
-                    _h.sent();
-                    _h.label = 25;
-                case 25:
-                    _g++;
-                    return [3 /*break*/, 23];
-                case 26: 
-                // Once we're done, call resolve for the Promise caller
-                return [4 /*yield*/, effects_1.call(resolve, data)];
-                case 27:
-                    // Once we're done, call resolve for the Promise caller
-                    _h.sent();
-                    return [3 /*break*/, 34];
-                case 28:
-                    e_1 = _h.sent();
-                    if (!(method === 'get')) return [3 /*break*/, 30];
-                    return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Error'](e_1.message))];
-                case 29:
-                    _h.sent();
-                    return [3 /*break*/, 32];
-                case 30: 
-                // Methods that persist data require the resource to revert optimistic updates
-                return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Error'](e_1.message, localResource))];
-                case 31:
-                    // Methods that persist data require the resource to revert optimistic updates
-                    _h.sent();
-                    _h.label = 32;
-                case 32: 
-                // Call reject for the Promise caller
-                return [4 /*yield*/, effects_1.call(reject, e_1.message)];
-                case 33:
-                    // Call reject for the Promise caller
-                    _h.sent();
-                    return [3 /*break*/, 34];
-                case 34: return [2 /*return*/];
+                    });
+                    yield effects_1.put(redux_batched_actions_1.batchActions(actions));
+                }
             }
-        });
+            // Once we're done, call resolve for the Promise caller
+            yield effects_1.call(resolve, data);
+        }
+        catch (e) {
+            if (method === 'get') {
+                yield effects_1.put(actionCreators[crudAction + 'Error'](e.message));
+            }
+            else {
+                // Methods that persist data require the resource to revert optimistic updates
+                yield effects_1.put(actionCreators[crudAction + 'Error'](e.message, localResource));
+            }
+            // Call reject for the Promise caller
+            yield effects_1.call(reject, e.message);
+        }
     };
 }
 // Selectors
@@ -347,28 +243,28 @@ function createSelectors(resourceName) {
         /**
          * @inheritdocs
          */
-        findById: function (state, id) {
+        findById(state, id) {
             return state[resourceName][id] || null;
         },
         /**
          * @inheritdocs
          */
-        findByCid: function (state, cid) {
-            return find_1.default(state[resourceName], function (item) { return item._cid === cid; });
+        findByCid(state, cid) {
+            return find_1.default(state[resourceName], (item) => item._cid === cid);
         },
         /**
          * @inheritdocs
          */
-        filter: function (state, predicate) {
+        filter(state, predicate) {
             return filter_1.default(state[resourceName], predicate);
         },
-        orderBy: function (state, predicate, order) {
+        orderBy(state, predicate, order) {
             return orderBy_1.default(state[resourceName], predicate, order);
         },
         /**
          * @inheritdocs
          */
-        findAll: function (state) {
+        findAll(state) {
             return state[resourceName];
         }
     };
@@ -381,28 +277,27 @@ function createSelectors(resourceName) {
  *
  * @returns {IAPIResource}
  */
-function createAPIResource(_a) {
-    var resourceName = _a.resourceName, baseUrl = _a.baseUrl, _b = _a.actions, actions = _b === void 0 ? availableActions : _b, selectAuthToken = _a.selectAuthToken, relations = _a.relations, _c = _a.options, options = _c === void 0 ? {
-        transformIn: identity_1.default,
-        transformOut: identity_1.default,
-    } : _c;
-    var actionCreators = redux_crud_1.default.actionCreatorsFor(resourceName);
-    var selectors = createSelectors(resourceName);
-    var apiResource = {
+function createAPIResource({ resourceName, baseUrl, actions = availableActions, selectAuthToken, relations, options = {
+    transformIn: identity_1.default,
+    transformOut: identity_1.default,
+} }) {
+    const actionCreators = redux_crud_1.default.actionCreatorsFor(resourceName);
+    const selectors = createSelectors(resourceName);
+    const apiResource = {
         workers: {},
         sagas: {},
         actions: actionCreators,
         actionNames: redux_crud_1.default.actionTypesFor(resourceName),
-        selectors: selectors,
+        selectors,
         reducers: redux_crud_1.default.Map.reducersFor(resourceName)
     };
     // Create a resource for each of our actions
-    actions.forEach(function (actionName) {
+    actions.forEach((actionName) => {
         if (!mapActionToHTTPMethod[actionName]) {
-            throw new Error("Method " + actionName + " not supported for resource " + resourceName);
+            throw new Error(`Method ${actionName} not supported for resource ${resourceName}`);
         }
         // Create the action constant
-        apiResource.actionNames[actionName] = resourceName.toUpperCase() + "_" + actionName.toUpperCase();
+        apiResource.actionNames[actionName] = `${resourceName.toUpperCase()}_${actionName.toUpperCase()}`;
         // Create the request FSA
         apiResource.actions[actionName] = saga_1.createPromiseAction(apiResource.actionNames[actionName], identity_1.default);
         // If we've got relations, add the root relation to the relations map.
@@ -413,27 +308,20 @@ function createAPIResource(_a) {
         }
         // Create the worker saga
         apiResource.workers[actionName] = createAPIAction({
-            resourceName: resourceName,
-            baseUrl: baseUrl,
-            actionCreators: actionCreators,
-            selectors: selectors,
-            actionName: actionName,
+            resourceName,
+            baseUrl,
+            actionCreators,
+            selectors,
+            actionName,
             method: mapActionToHTTPMethod[actionName],
-            selectAuthToken: selectAuthToken,
-            relations: relations,
+            selectAuthToken,
+            relations,
             transformIn: options.transformIn || identity_1.default,
             transformOut: options.transformOut || identity_1.default
         });
         // Create the watcher saga
-        apiResource.sagas[actionName] = function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, effects_1.call(redux_saga_1.takeLatest, apiResource.actionNames[actionName], apiResource.workers[actionName])];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
+        apiResource.sagas[actionName] = function* () {
+            yield effects_1.call(redux_saga_1.takeLatest, apiResource.actionNames[actionName], apiResource.workers[actionName]);
         };
     });
     return apiResource;
@@ -450,13 +338,13 @@ function createRequestBody(contentType, resource) {
         case 'application/json':
             return JSON.stringify(resource);
         case 'multipart/form-data':
-            var formData = new FormData();
-            for (var name_1 in resource) {
-                formData.append(name_1, resource[name_1]);
+            const formData = new FormData();
+            for (const name in resource) {
+                formData.append(name, resource[name]);
             }
             return formData;
         default:
-            throw new Error("Could not create request body: there is no handler for content-type: " + contentType);
+            throw new Error(`Could not create request body: there is no handler for content-type: ${contentType}`);
     }
 }
 exports.default = createAPIResource;
