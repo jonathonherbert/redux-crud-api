@@ -1,61 +1,77 @@
 {
   "name": "redux-crud-api",
-  "version": "0.1.4",
-  "description": "Boilerplate-free CRUD API operations with Redux",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
-  "jam": {
-    "main": "./dist/index.browser.js"
-  },
-  "browser": {
-    "dist/index.js": "./dist/index.browser.js"
-  },
-  "scripts": {
-    "build": "webpack || echo not ok",
-    "test": "jest",
-    "test:watch": "npm test -- --watch",
-    "coverage": "npm test -- --coverage --no-cache",
-    "coverage:watch": "npm run coverage -- --watch",
-    "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
-    "prepare": "npm run build && npm test",
-    "release": "standard-version && npm pack"
-  },
+  "version": "0.0.0",
+  "description": "",
+  "keywords": [],
+  "main": "dist/redux-crud-api.umd.js",
+  "module": "dist/redux-crud-api.es5.js",
+  "typings": "dist/types/redux-crud-api.d.ts",
+  "files": [
+    "dist"
+  ],
+  "author": " <jonathon.herbert@newicon.net>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jsherbert/redux-crud-api.git"
+    "url": ""
   },
-  "keywords": [
-    "typescript",
-    "library",
-    "redux",
-    "redux-crud",
-    "redux-saga"
-  ],
-  "author": "Jonathon Herbert",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/jsherbert/redux-crud-api/issues"
+  "engines": {
+    "node": ">=6.0.0"
   },
-  "homepage": "https://github.com/jsherbert/redux-crud-api#readme",
-  "devDependencies": {
-    "@types/jest": "^20.0.7",
-    "@types/node": "^8.0.24",
-    "browserify": "^14.4.0",
-    "coveralls": "^3.0.0",
-    "delete-empty": "^1.0.1",
-    "dts-bundle": "^0.7.3",
-    "jest": "^20.0.4",
-    "jsdom": "11.6.2",
-    "jsdom-global": "3.0.2",
-    "standard-version": "^4.2.0",
-    "ts-jest": "^20.0.10",
-    "ts-loader": "^2.3.3",
-    "tslint": "^5.6.0",
-    "tslint-loader": "^3.5.3",
-    "typescript": "2.4.2",
-    "webpack": "3.5.5",
-    "webpack-node-externals": "^1.6.0",
-    "whatwg-fetch": "^2.0.3"
+  "scripts": {
+    "lint": "tslint -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
+    "prebuild": "rimraf dist",
+    "build": "tsc --module commonjs --outDir dist/lib && rollup -c rollup.config.ts && typedoc --out dist/docs --target es6 --theme minimal --mode file src",
+    "start": "rollup -c rollup.config.ts -w",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:prod": "npm run lint && npm run test -- --coverage --no-cache",
+    "deploy-docs": "ts-node tools/gh-pages-publish",
+    "report-coverage": "cat ./coverage/lcov.info | coveralls",
+    "commit": "git-cz",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
+    "semantic-release-prepare": "ts-node tools/semantic-release-prepare",
+    "precommit": "lint-staged"
+  },
+  "lint-staged": {
+    "{src,test}/**/*.ts": [
+      "prettier --write --no-semi --single-quote",
+      "git add"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-conventional-changelog"
+    },
+    "validate-commit-msg": {
+      "types": "conventional-commit-types",
+      "helpMessage": "Use \"npm run commit\" instead, we use conventional-changelog format :) (https://github.com/commitizen/cz-cli)"
+    }
+  },
+  "jest": {
+    "transform": {
+      ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/test/"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    },
+    "collectCoverage": true,
+    "mapCoverage": true
   },
   "dependencies": {
     "@types/lodash": "^4.14.102",
@@ -65,26 +81,38 @@
     "redux-batched-actions": "^0.2.1",
     "redux-crud": "^3.2.0",
     "redux-saga": "^0.16.0",
+    "uuid": "^3.2.1",
     "whatwg-fetch": "latest"
   },
-  "jest": {
-    "transform": {
-      ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
-    },
-    "mapCoverage": true,
-    "collectCoverageFrom": [
-      "src/**/*.ts"
-    ],
-    "coveragePathIgnorePatterns": [
-      "src/.*\\.spec\\.ts$",
-      "/node_modules/"
-    ],
-    "testEnvironment": "jsdom",
-    "testRegex": "src/.*\\.spec\\.ts$",
-    "moduleFileExtensions": [
-      "ts",
-      "js",
-      "json"
-    ]
+  "devDependencies": {
+    "@types/jest": "^22.0.0",
+    "@types/node": "^9.3.0",
+    "colors": "^1.1.2",
+    "commitizen": "^2.9.6",
+    "coveralls": "^3.0.0",
+    "cross-env": "^5.0.1",
+    "cz-conventional-changelog": "^2.0.0",
+    "husky": "^0.14.0",
+    "jest": "^22.0.2",
+    "lint-staged": "^6.0.0",
+    "lodash.camelcase": "^4.3.0",
+    "prettier": "^1.4.4",
+    "prompt": "^1.0.0",
+    "replace-in-file": "^3.0.0-beta.2",
+    "rimraf": "^2.6.1",
+    "rollup": "^0.54.0",
+    "rollup-plugin-commonjs": "^8.0.2",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-sourcemaps": "^0.4.2",
+    "rollup-plugin-typescript2": "^0.10.0",
+    "semantic-release": "^12.2.2",
+    "ts-jest": "^22.0.0",
+    "ts-node": "^4.1.0",
+    "tslint": "^5.8.0",
+    "tslint-config-prettier": "^1.1.0",
+    "tslint-config-standard": "^7.0.0",
+    "typedoc": "^0.10.0",
+    "typescript": "^2.6.2",
+    "validate-commit-msg": "^2.12.2"
   }
 }
