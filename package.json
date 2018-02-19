@@ -52,7 +52,7 @@
     "transform": {
       ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "testRegex": "src/.*\\.spec\\.ts$",
     "moduleFileExtensions": [
       "ts",
       "tsx",
@@ -60,7 +60,7 @@
     ],
     "coveragePathIgnorePatterns": [
       "/node_modules/",
-      "/test/"
+      "/*.spec.*"
     ],
     "coverageThreshold": {
       "global": {
@@ -73,7 +73,8 @@
     "collectCoverage": true,
     "mapCoverage": true
   },
-  "dependencies": {},
+  "dependencies": {
+  },
   "peerDependencies": {
     "normalizr": "3.x",
     "redux": "3.x",
@@ -82,7 +83,8 @@
     "redux-crud": "3.x",
     "redux-saga": "0.16.x",
     "uuid": "3.2.x",
-    "whatwg-fetch": "2.x"
+    "whatwg-fetch": "2.x",
+    "lodash": "4.x"
   },
   "devDependencies": {
     "@types/jest": "^22.0.0",
@@ -97,6 +99,7 @@
     "redux-crud": "3.x",
     "redux-saga": "0.16.x",
     "uuid": "3.2.x",
+    "lodash": "4.17.5",
     "whatwg-fetch": "2.x",
     "colors": "^1.1.2",
     "commitizen": "^2.9.6",
