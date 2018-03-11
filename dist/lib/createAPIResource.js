@@ -68,6 +68,104 @@ var mapActionToHTTPMethod = {
 // The default actions available.
 var availableActions = ['create', 'update', 'del', 'fetch', 'search'];
 /**
+ * Get the request body for a given API action.
+ *
+ * @param {string} method
+ * @param {IAPIActionOptions} options
+ */
+var getRequestBody = function (_a) {
+    var resource = _a.resource, transformOut = _a.transformOut, actionName = _a.actionName, contentType = _a.contentType;
+    var resourceToSend = transformOut(__assign({}, resource));
+    if (actionName === 'create') {
+        delete resourceToSend.id;
+    }
+    return createRequestBody(contentType, resourceToSend);
+};
+var getContentType = function (options) {
+    return options && options.contentType ? options.contentType : 'application/json';
+};
+/**
+ * Get the request headers for a given API action. These include the content type
+ * and any necessary authorisation tokens.
+ *
+ * @param {string} method
+ * @param {IAPIOptions} options
+ * @param selectAuthToken
+ */
+var getRequestHeaders = function (method, contentType, authToken) {
+    var headers = new Headers();
+    if ((method === 'post' || method === 'put') && contentType !== 'multipart/form-data') {
+        headers.append('content-type', contentType);
+    }
+    // Add the authentication code to the header, if we have it
+    if (authToken) {
+        headers.append('Authorization', "Bearer " + authToken);
+    }
+    return headers;
+};
+/**
+ * Creates a request body given a content type.
+ *
+ * @param {string} contentType e.g. application/json
+ * @param {any} resource The resource to send.
+ * @return {any} The request body data
+ */
+var createRequestBody = function (contentType, resource) {
+    switch (contentType) {
+        case 'application/json':
+            return JSON.stringify(resource);
+        case 'multipart/form-data':
+            var formData = new FormData();
+            for (var name_1 in resource) {
+                formData.append(name_1, resource[name_1]);
+            }
+            return formData;
+        default:
+            throw new Error("Could not create request body: there is no handler for content-type: " + contentType);
+    }
+};
+/**
+ * Get the request options for the API action.
+ */
+var getRequestOptions = function (_a) {
+    var method = _a.method, contentType = _a.contentType, authToken = _a.authToken, resource = _a.resource, transformOut = _a.transformOut, actionName = _a.actionName;
+    var requestOptions = {
+        method: method.toUpperCase(),
+        headers: getRequestHeaders(method, contentType, authToken),
+    };
+    if (method === 'post' || method === 'put') {
+        requestOptions.body = getRequestBody({ resource: resource, transformOut: transformOut, actionName: actionName, contentType: contentType });
+    }
+    return requestOptions;
+};
+/**
+ * Get the relative request string for a given API action.
+ *
+ * @param {string} method
+ * @param {string} actionName
+ * @param {any} resource
+ * @param {string} resourceName
+ * @param {IAPIActionOptions} options
+ */
+var getRequestString = function (_a) {
+    var method = _a.method, actionName = _a.actionName, resource = _a.resource, resourceName = _a.resourceName, options = _a.options;
+    var requestString = '';
+    if (options && options.endpoint) {
+        requestString += "/" + options.endpoint;
+    }
+    else {
+        requestString = "/" + kebabCase_1.default(resourceName);
+    }
+    // If we have a specific resource or request type, append it to request URL
+    if ((method === 'get' && actionName !== 'search' && resource.id) || method === 'delete' || method === 'put') {
+        requestString += "/" + resource.id;
+    }
+    if (actionName === 'search') {
+        requestString += "/search?" + qs.stringify(resource);
+    }
+    return requestString;
+};
+/**
  * Creates a saga that handles API operations.
  * Updates optimistically when updating or creating.
  *
@@ -98,7 +196,7 @@ function createAPIAction(_a) {
      */
     return function (_a) {
         var payload = _a.payload, _b = _a.meta, resolve = _b.resolve, reject = _b.reject;
-        var resource, options, cid, relationKeys, crudAction, localResource, modelFromState, schema, normalisedResource, _loop_1, _c, _d, _i, i, requestString, requestOptions, contentType, resourceToSend, token, response, data, json, dataIsArray, normalisedData, _loop_2, _e, _f, _g, i, e_1;
+        var resource, options, cid, authToken, relationKeys, crudAction, localResource, modelFromState, schema, normalisedResource, _loop_1, _c, _d, _i, i, contentType, requestOptions, requestString, response, data, json, dataIsArray, normalisedData, _loop_2, _e, _f, _g, i, e_1;
         return __generator(this, function (_h) {
             switch (_h.label) {
                 case 0:
@@ -107,6 +205,12 @@ function createAPIAction(_a) {
                     if (payload) {
                         (resource = payload.resource, options = payload.options);
                     }
+                    if (!selectAuthToken) return [3 /*break*/, 2];
+                    return [4 /*yield*/, effects_1.select(selectAuthToken)];
+                case 1:
+                    authToken = _h.sent();
+                    _h.label = 2;
+                case 2:
                     localResource = __assign({}, resource);
                     // If we're creating a record, give it the client id if it doesn't have one already
                     if (actionName === 'create') {
@@ -117,21 +221,21 @@ function createAPIAction(_a) {
                             cid = localResource.id = v4_1.default();
                         }
                     }
-                    if (!(actionName === 'update')) return [3 /*break*/, 4];
+                    if (!(actionName === 'update')) return [3 /*break*/, 6];
                     return [4 /*yield*/, effects_1.select(selectors.findById, localResource.id)];
-                case 1:
-                    modelFromState = _h.sent();
-                    if (!!modelFromState) return [3 /*break*/, 3];
-                    return [4 /*yield*/, effects_1.call(reject, "Could not select model with id " + resource.id)];
-                case 2:
-                    _h.sent();
-                    _h.label = 3;
                 case 3:
-                    localResource = __assign({}, modelFromState, localResource);
-                    _h.label = 4;
+                    modelFromState = _h.sent();
+                    if (!!modelFromState) return [3 /*break*/, 5];
+                    return [4 /*yield*/, effects_1.call(reject, "Could not select model with id " + resource.id)];
                 case 4:
-                    if (!(resource && actionCreators[crudAction + 'Start'])) return [3 /*break*/, 11];
-                    if (!(relations && (actionName === 'update' || actionName === 'create'))) return [3 /*break*/, 9];
+                    _h.sent();
+                    _h.label = 5;
+                case 5:
+                    localResource = __assign({}, modelFromState, localResource);
+                    _h.label = 6;
+                case 6:
+                    if (!(resource && actionCreators[crudAction + 'Start'])) return [3 /*break*/, 13];
+                    if (!(relations && (actionName === 'update' || actionName === 'create'))) return [3 /*break*/, 11];
                     schema = Array.isArray(localResource) ? [relations.schema] : relations.schema;
                     normalisedResource = normalizr_1.normalize(localResource, schema);
                     _loop_1 = function (i) {
@@ -166,73 +270,41 @@ function createAPIAction(_a) {
                     for (_d in relations.map)
                         _c.push(_d);
                     _i = 0;
-                    _h.label = 5;
-                case 5:
-                    if (!(_i < _c.length)) return [3 /*break*/, 8];
-                    i = _c[_i];
-                    return [5 /*yield**/, _loop_1(i)];
-                case 6:
-                    _h.sent();
                     _h.label = 7;
                 case 7:
-                    _i++;
-                    return [3 /*break*/, 5];
-                case 8: return [3 /*break*/, 11];
-                case 9: return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Start'](localResource))];
-                case 10:
+                    if (!(_i < _c.length)) return [3 /*break*/, 10];
+                    i = _c[_i];
+                    return [5 /*yield**/, _loop_1(i)];
+                case 8:
                     _h.sent();
-                    _h.label = 11;
-                case 11:
-                    requestString = baseUrl + "/" + kebabCase_1.default(resourceName);
-                    // If we have a specific resource or request type, append it to request URL
-                    if ((method === 'get' && actionName !== 'search' && localResource.id) || method === 'delete' || method === 'put') {
-                        requestString += "/" + localResource.id;
-                    }
-                    if (actionName === 'search') {
-                        requestString += '/search';
-                    }
-                    if (options && options.endpoint) {
-                        requestString += "/" + options.endpoint;
-                    }
-                    requestOptions = {
-                        method: method.toUpperCase(),
-                        headers: new Headers(),
-                    };
-                    // Add the request body if we're sending data
-                    if (method === 'post' || method === 'put') {
-                        contentType = options && options.contentType ? options.contentType : 'application/json';
-                        resourceToSend = transformOut(__assign({}, localResource));
-                        if (actionName === 'create') {
-                            delete resourceToSend.id;
-                        }
-                        if (contentType !== 'multipart/form-data') {
-                            requestOptions.headers.append('content-type', contentType);
-                        }
-                        requestOptions.body = createRequestBody(contentType, resourceToSend);
-                    }
-                    if (actionName === 'search') {
-                        requestString += "?" + qs.stringify(localResource);
-                    }
-                    if (!selectAuthToken) return [3 /*break*/, 13];
-                    return [4 /*yield*/, effects_1.select(selectAuthToken)];
+                    _h.label = 9;
+                case 9:
+                    _i++;
+                    return [3 /*break*/, 7];
+                case 10: return [3 /*break*/, 13];
+                case 11: return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Start'](localResource))];
                 case 12:
-                    token = _h.sent();
-                    requestOptions.headers.append('Authorization', "Bearer " + token);
+                    _h.sent();
                     _h.label = 13;
                 case 13:
-                    _h.trys.push([13, 28, , 34]);
-                    return [4 /*yield*/, effects_1.call(fetch, requestString, requestOptions)];
+                    contentType = getContentType(options);
+                    requestOptions = getRequestOptions({ resource: localResource, actionName: actionName, method: method, contentType: contentType, authToken: authToken, transformOut: transformOut });
+                    requestString = getRequestString({ resource: localResource, actionName: actionName, method: method, resourceName: resourceName, options: options });
+                    _h.label = 14;
                 case 14:
+                    _h.trys.push([14, 29, , 35]);
+                    return [4 /*yield*/, effects_1.call(fetch, baseUrl + requestString, requestOptions)];
+                case 15:
                     response = _h.sent();
                     if (response.status < 200 || response.status > 299) {
                         throw new Error("HTTP Error: " + response.status);
                     }
                     data = void 0;
-                    if (!(actionName === 'del')) return [3 /*break*/, 15];
+                    if (!(actionName === 'del')) return [3 /*break*/, 16];
                     data = localResource;
-                    return [3 /*break*/, 17];
-                case 15: return [4 /*yield*/, effects_1.apply(response, response.json)];
-                case 16:
+                    return [3 /*break*/, 18];
+                case 16: return [4 /*yield*/, effects_1.apply(response, response.json)];
+                case 17:
                     json = _h.sent();
                     data = json.data ? json.data : json;
                     dataIsArray = Array.isArray(data);
@@ -242,22 +314,20 @@ function createAPIAction(_a) {
                     else {
                         data = transformIn(data);
                     }
-                    _h.label = 17;
-                case 17:
-                    if (!(!relations
-                        || (crudAction !== 'fetch'
-                            && crudAction !== 'update'))) return [3 /*break*/, 22];
-                    if (!(actionName === 'create')) return [3 /*break*/, 19];
-                    return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Success'](data, cid))];
+                    _h.label = 18;
                 case 18:
+                    if (!(!relations || (crudAction !== 'fetch' && crudAction !== 'update'))) return [3 /*break*/, 23];
+                    if (!(actionName === 'create')) return [3 /*break*/, 20];
+                    return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Success'](data, cid))];
+                case 19:
                     _h.sent();
-                    return [3 /*break*/, 21];
-                case 19: return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Success'](data))];
-                case 20:
+                    return [3 /*break*/, 22];
+                case 20: return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Success'](data))];
+                case 21:
                     _h.sent();
-                    _h.label = 21;
-                case 21: return [3 /*break*/, 26];
-                case 22:
+                    _h.label = 22;
+                case 22: return [3 /*break*/, 27];
+                case 23:
                     normalisedData = normalizr_1.normalize(data, Array.isArray(data) ? [relations.schema] : relations.schema);
                     _loop_2 = function (i) {
                         var relationData, actions;
@@ -290,46 +360,46 @@ function createAPIAction(_a) {
                     for (_f in relations.map)
                         _e.push(_f);
                     _g = 0;
-                    _h.label = 23;
-                case 23:
-                    if (!(_g < _e.length)) return [3 /*break*/, 26];
+                    _h.label = 24;
+                case 24:
+                    if (!(_g < _e.length)) return [3 /*break*/, 27];
                     i = _e[_g];
                     return [5 /*yield**/, _loop_2(i)];
-                case 24:
-                    _h.sent();
-                    _h.label = 25;
                 case 25:
+                    _h.sent();
+                    _h.label = 26;
+                case 26:
                     _g++;
-                    return [3 /*break*/, 23];
-                case 26: 
+                    return [3 /*break*/, 24];
+                case 27: 
                 // Once we're done, call resolve for the Promise caller
                 return [4 /*yield*/, effects_1.call(resolve, data)];
-                case 27:
+                case 28:
                     // Once we're done, call resolve for the Promise caller
                     _h.sent();
-                    return [3 /*break*/, 34];
-                case 28:
-                    e_1 = _h.sent();
-                    if (!(method === 'get')) return [3 /*break*/, 30];
-                    return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Error'](e_1.message))];
+                    return [3 /*break*/, 35];
                 case 29:
+                    e_1 = _h.sent();
+                    if (!(method === 'get')) return [3 /*break*/, 31];
+                    return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Error'](e_1.message))];
+                case 30:
                     _h.sent();
-                    return [3 /*break*/, 32];
-                case 30: 
+                    return [3 /*break*/, 33];
+                case 31: 
                 // Methods that persist data require the resource to revert optimistic updates
                 return [4 /*yield*/, effects_1.put(actionCreators[crudAction + 'Error'](e_1.message, localResource))];
-                case 31:
+                case 32:
                     // Methods that persist data require the resource to revert optimistic updates
                     _h.sent();
-                    _h.label = 32;
-                case 32: 
+                    _h.label = 33;
+                case 33: 
                 // Call reject for the Promise caller
                 return [4 /*yield*/, effects_1.call(reject, e_1.message)];
-                case 33:
+                case 34:
                     // Call reject for the Promise caller
                     _h.sent();
-                    return [3 /*break*/, 34];
-                case 34: return [2 /*return*/];
+                    return [3 /*break*/, 35];
+                case 35: return [2 /*return*/];
             }
         });
     };
@@ -437,27 +507,6 @@ function createAPIResource(_a) {
         };
     });
     return apiResource;
-}
-/**
- * Creates a request body given a content type.
- *
- * @param {string} contentType e.g. application/json
- * @param {any} resource The resource to send.
- * @return {any} The request body data
- */
-function createRequestBody(contentType, resource) {
-    switch (contentType) {
-        case 'application/json':
-            return JSON.stringify(resource);
-        case 'multipart/form-data':
-            var formData = new FormData();
-            for (var name_1 in resource) {
-                formData.append(name_1, resource[name_1]);
-            }
-            return formData;
-        default:
-            throw new Error("Could not create request body: there is no handler for content-type: " + contentType);
-    }
 }
 exports.default = createAPIResource;
 //# sourceMappingURL=createAPIResource.js.map

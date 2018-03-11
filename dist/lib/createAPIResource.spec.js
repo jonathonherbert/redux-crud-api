@@ -274,9 +274,9 @@ describe('(Util) asyncActionCreator', function () {
                 selectAuthToken: selectAuthToken
             });
             var iterator = modelResourceWithAuth.workers.fetch(modelResource.actions.fetch({ resource: resource }));
-            expect(iterator.next().value).toEqual(effects_1.put(actionCreators.fetchStart(resource)));
             expect(iterator.next().value).toEqual(effects_1.select(selectAuthToken));
-            expect(iterator.next('token').value).toEqual(effects_1.call(fetch, '/api/model/1', {
+            expect(iterator.next('token').value).toEqual(effects_1.put(actionCreators.fetchStart(resource)));
+            expect(iterator.next().value).toEqual(effects_1.call(fetch, '/api/model/1', {
                 method: 'GET',
                 headers: new Headers({
                     Authorization: 'Bearer token'
@@ -290,7 +290,7 @@ describe('(Util) asyncActionCreator', function () {
             var iterator = modelResource.workers.fetch(modelResource.actions.fetch({ resource: null, options: { endpoint: 'recent' } }));
             // Use fetch to make the API call
             expect(iterator.next().value)
-                .toEqual(effects_1.call(fetch, '/api/model/recent', { method: 'GET', headers: new Headers() }));
+                .toEqual(effects_1.call(fetch, '/api/recent', { method: 'GET', headers: new Headers() }));
             // Deal with the promise returned by the fetch .json() call
             expect(iterator.next(arrayResponse).value).toEqual(effects_1.apply(arrayResponse, arrayResponse.json));
             // Dispatch the success action
