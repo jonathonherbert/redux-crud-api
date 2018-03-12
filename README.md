@@ -5,7 +5,7 @@
 
 ### Boilerplate-free CRUD API operations with Redux
 
-Redux is great. But the boilerplate can be verbose and become un-DRY, and handling side-effects can be complex. Shouldn't making API requests and dealing with the resulting application state be easy?
+Redux is great. But the boilerplate can be verbose and become un-DRY, and handling side-effects can be complex. Shouldn't making API requests and interacting with the resulting application state be easy?
 
 ```js
 

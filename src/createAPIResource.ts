@@ -60,16 +60,22 @@ interface ICreateAPIActionOptions {
 }
 
 interface IAPIActionOptions {
+  // The endpoint for requests.
   endpoint: string
+  // The content-type that should be set in request headers.
   contentType: string
 }
 
 interface IAPIAction {
   payload: {
+    // The resource. This is named grossly right now.
+    // Really it's whatever params the op needs to work, e.g.
+    // an ID, search params, a whole model. The ambiguity is rubbish.
     resource: any
     options: IAPIActionOptions
   }
   meta: {
+    // The function called when the saga is done
     resolve: () => any
     reject: () => any
   }
@@ -77,9 +83,6 @@ interface IAPIAction {
 
 /**
  * Get the request body for a given API action.
- *
- * @param {string} method
- * @param {IAPIActionOptions} options
  */
 const getRequestBody = ({
   resource,
@@ -244,22 +247,6 @@ function createAPIAction({
    * Generator for the given action.
    * Accepts FSA containing a payload with property 'resource' containing request data.
    * Dispatches start (if applicable) action, makes HTTP calls, dispatches success/error actions with result.
-   *
-   * @param {FSA} action
-   *  {
-   * 		payload: {
-   * 			resource: any  The resource. This is named grossly right now.
-   * 				Really it's whatever params the op needs to work, e.g.
-   * 				an ID, search params, a whole model. The ambiguity is rubbish.
-   * 			options: {
-   * 				endpoint: string  An endpoint to add to the default REST request.
-   * 			}
-   * 		},
-   * 		meta: {
-   * 			resolve: Function  The function called when the saga is done
-   * 			reject: Function  The function called if the saga throws
-   * 		}
-   *  }
    */
   return function*({ payload, meta: { resolve, reject } }: IAPIAction) {
     // We store a client id here for optimistic creation
