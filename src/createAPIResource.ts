@@ -226,6 +226,42 @@ const getRequestString = ({
 }
 
 /**
+ * Get data from the API response.
+ */
+function* getDataFromAPIResponse({
+  response,
+  resource,
+  actionName,
+  transformIn
+}: {
+  response: Response
+  resource: any
+  actionName: string
+  transformIn: (resource: any) => any
+}) {
+  if (response.status < 200 || response.status > 299) {
+    throw new Error(`HTTP Error: ${response.status}`)
+  }
+  let data
+  if (actionName === 'del') {
+    data = resource
+  } else {
+    // We take the data from the 'data' envelope, if it exists,
+    // or from the json directly if it doesn't.
+    // It'd be good to let the user provide an envelope.
+    const json = yield apply(response, response.json)
+    data = json.data ? json.data : json
+    // Apply transforms
+    const dataIsArray = Array.isArray(data)
+    if (dataIsArray) {
+      data = data.map((item: any) => transformIn(item))
+    } else {
+      data = transformIn(data)
+    }
+  }
+}
+
+/**
  * Creates a saga that handles API operations.
  * Updates optimistically when updating or creating.
  *
@@ -267,11 +303,7 @@ function createAPIAction({
 
     // If we're creating a record, give it the client id if it doesn't have one already
     if (actionName === 'create') {
-      if (localResource.id) {
-        cid = localResource.id
-      } else {
-        cid = localResource.id = v4()
-      }
+      cid = localResource.id ? localResource.id : (localResource.id = v4())
     }
 
     // If we're updating a model, merge it with what's current in the state
@@ -334,26 +366,12 @@ function createAPIAction({
     // Make the request and handle the response
     try {
       const response = yield call(fetch, baseUrl + requestString, requestOptions)
-      if (response.status < 200 || response.status > 299) {
-        throw new Error(`HTTP Error: ${response.status}`)
-      }
-      let data
-      if (actionName === 'del') {
-        data = localResource
-      } else {
-        // We take the data from the 'data' envelope, if it exists,
-        // or from the json directly if it doesn't.
-        // It'd be good to let the user provide an envelope.
-        const json = yield apply(response, response.json)
-        data = json.data ? json.data : json
-        // Apply transforms
-        const dataIsArray = Array.isArray(data)
-        if (dataIsArray) {
-          data = data.map((item: any) => transformIn(item))
-        } else {
-          data = transformIn(data)
-        }
-      }
+      const data = yield getDataFromAPIResponse({
+        resource: localResource,
+        response,
+        actionName,
+        transformIn
+      })
 
       // If there aren't any relations or we're not running a fetch or update, do a basic persist
       if (!relations || (crudAction !== 'fetch' && crudAction !== 'update')) {
