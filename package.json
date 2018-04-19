@@ -74,13 +74,11 @@
     "mapCoverage": true
   },
   "dependencies": {
-  },
-  "peerDependencies": {
     "normalizr": "3.x",
     "redux": "3.x",
     "redux-actions": "2.x",
     "redux-batched-actions": "0.2.x",
-    "redux-crud": "3.x",
+    "redux-crud": "3.2.0",
     "redux-saga": "0.16.x",
     "uuid": "3.2.x",
     "whatwg-fetch": "2.x",
@@ -96,7 +94,7 @@
     "redux": "3.x",
     "redux-actions": "2.x",
     "redux-batched-actions": "0.2.x",
-    "redux-crud": "3.x",
+    "redux-crud": "3.2.0",
     "redux-saga": "0.16.x",
     "uuid": "3.2.x",
     "lodash": "4.17.5",
