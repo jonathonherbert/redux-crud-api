@@ -134,7 +134,7 @@ describe('createAPIResource', () => {
       it('makes fetch requests and handles valid array responses', async () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', arrayResponse)
-        await store.dispatch(modelResource.actions.fetch({ payload: { resource } }))
+        await store.dispatch(modelResource.actions.fetch({ resource }))
         // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
@@ -144,9 +144,7 @@ describe('createAPIResource', () => {
       it('makes fetch requests and applies transforms', async () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', arrayResponse)
-        const result = await store.dispatch(
-          modelResourceWithTransforms.actions.fetch({ payload: { resource } })
-        )
+        const result = await store.dispatch(modelResourceWithTransforms.actions.fetch({ resource }))
         // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
@@ -161,7 +159,7 @@ describe('createAPIResource', () => {
       it('makes fetch requests and handles responses without an envelope', async () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', responseNoEnvelope)
-        await store.dispatch(modelResource.actions.fetch({ payload: { resource } }))
+        await store.dispatch(modelResource.actions.fetch({ resource }))
         // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
@@ -171,7 +169,7 @@ describe('createAPIResource', () => {
       it('makes fetch requests and makes appropriate calls if relations are defined', async () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', arrayResponse)
-        await store.dispatch(relationResource.actions.fetch({ payload: { resource } }))
+        await store.dispatch(relationResource.actions.fetch({ resource }))
         // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
@@ -191,7 +189,7 @@ describe('createAPIResource', () => {
       it('makes fetch requests and handles errors', async () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', 400)
-        await store.dispatch(modelResource.actions.fetch({ payload: { resource } }))
+        await store.dispatch(modelResource.actions.fetch({ resource }))
         // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
@@ -207,7 +205,7 @@ describe('createAPIResource', () => {
           selectAuthToken
         })
         fetchMock.mock('/api/model/1', arrayResponse)
-        await store.dispatch(modelResourceWithAuth.actions.fetch({ payload: { resource } }))
+        await store.dispatch(modelResourceWithAuth.actions.fetch({ resource }))
         // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
@@ -224,10 +222,8 @@ describe('createAPIResource', () => {
         fetchMock.mock('/api/recent/1', arrayResponse)
         await store.dispatch(
           modelResource.actions.fetch({
-            payload: {
-              resource,
-              options: { endpoint: 'recent' }
-            }
+            resource,
+            options: { endpoint: 'recent' }
           })
         )
         // The first yield dispatches the start action.
@@ -238,138 +234,122 @@ describe('createAPIResource', () => {
     })
 
     describe('Update worker', () => {
-      it('makes update requests and handles valid responses', () => {
-        const iterator = modelResource.workers.update(modelResource.actions.update({ resource }))
-        expect(iterator.next().value).toEqual(select(modelResource.selectors.findById, resource.id))
-        expect(iterator.next(resource).value).toEqual(put(actionCreators.updateStart(resource)))
-        const headers = new Headers()
-        headers.append('content-type', 'application/json')
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model/1', {
-            method: 'PUT',
-            body: JSON.stringify(resource),
-            headers
-          })
-        )
-        expect(iterator.next(response).value).toEqual(apply(response, response.json))
-        expect(iterator.next(response.json()).value).toEqual(
-          put(actionCreators.updateSuccess(response.json().data))
-        )
-        expect(iterator.next().value).toEqual(call(noop, response.json().data))
+      it('makes update requests and handles valid responses', async () => {
+        const store = mockStore({
+          model: {
+            1: {}
+          }
+        })
+        fetchMock.mock('/api/model/1', response, { method: 'PUT' })
+        await store.dispatch(modelResource.actions.update({ resource }))
+        // The first yield dispatches the start action.
+        const actions = store.getActions()
+        expect(actions[0]).toEqual(actionCreators.updateStart(resource))
+        expect(actions[1]).toEqual(actionCreators.updateSuccess(response.data))
       })
 
-      it('makes update requests and merges existing model with updates', () => {
-        const resourceFromState = { ...resource, isMerged: true }
-        const iterator = modelResource.workers.update(modelResource.actions.update({ resource }))
-        expect(iterator.next().value).toEqual(select(modelResource.selectors.findById, resource.id))
-        expect(iterator.next(resourceFromState).value).toEqual(
-          put(actionCreators.updateStart(resourceFromState))
+      it('makes update requests and merges existing model with updates', async () => {
+        const store = mockStore({
+          model: {
+            1: { ...resource, isMerged: true }
+          }
+        })
+        fetchMock.mock(
+          (url, opts) => {
+            // Body doesn't exist on the typings here, but it should!
+            expect((opts as any).body).toBe(JSON.stringify(resource))
+            return url === '/api/model/1'
+          },
+          response,
+          { method: 'PUT' }
         )
-        const headers = new Headers()
-        headers.append('content-type', 'application/json')
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model/1', {
-            method: 'PUT',
-            body: JSON.stringify(resourceFromState),
-            headers
-          })
-        )
+        await store.dispatch(modelResource.actions.update({ resource }))
+        // The first yield dispatches the start action.
+        const actions = store.getActions()
+        expect(actions[0]).toEqual(actionCreators.updateStart({ ...resource, isMerged: true }))
       })
 
-      it('should throw if the model being updated cannot be found in the local state	', () => {
-        const iterator = modelResource.workers.update(modelResource.actions.update({ resource }))
-        expect(iterator.next().value).toEqual(select(modelResource.selectors.findById, resource.id))
-        expect(iterator.next(null).value).toEqual(
-          call(noop, `Could not select model with id ${resource.id}`)
-        )
+      it('should throw if the model being updated cannot be found in the local state	', async () => {
+        const store = mockStore()
+        return expect(store.dispatch(modelResource.actions.update({ resource }))).rejects
       })
 
-      it('makes update requests and apply transformations', () => {
-        const iterator = modelResourceWithTransforms.workers.update(
-          modelResourceWithTransforms.actions.update({ resource })
+      it('makes update requests and apply transformations', async () => {
+        const store = mockStore({
+          model: {
+            1: resource
+          }
+        })
+        fetchMock.mock(
+          (url, opts) => {
+            // Body doesn't exist on the typings here, but it should!
+            expect((opts as any).body).toBe(JSON.stringify(transformOut(resource)))
+            return url === '/api/model/1'
+          },
+          response,
+          { method: 'PUT' }
         )
-        expect(iterator.next().value).toEqual(
-          select(modelResourceWithTransforms.selectors.findById, resource.id)
-        )
-        expect(iterator.next(resource).value).toEqual(put(actionCreators.updateStart(resource)))
-        const headers = new Headers()
-        headers.append('content-type', 'application/json')
 
-        // The data going to the endpoint should have been run through the transform function
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model/1', {
-            method: 'PUT',
-            body: JSON.stringify(transformOut(resource)),
-            headers
-          })
-        )
+        await store.dispatch(modelResourceWithTransforms.actions.update({ resource }))
+        // The first yield dispatches the start action.
+        const actions = store.getActions()
+        expect(actions[0]).toEqual(actionCreators.updateStart(resource))
       })
 
-      it('makes update requests and applies relations on optimistic update', () => {
-        const iterator = relationResource.workers.update(
-          relationResource.actions.update({ resource })
+      it('makes update requests and applies relations on optimistic update', async () => {
+        const store = mockStore({
+          model: {
+            1: resource
+          }
+        })
+        fetchMock.mock(
+          (url, opts) => {
+            // Body doesn't exist on the typings here, but it should!
+            expect((opts as any).body).toBe(JSON.stringify(resource))
+            return url === '/api/model/1'
+          },
+          response,
+          { method: 'PUT' }
         )
 
+        await store.dispatch(relationResource.actions.update({ resource }))
+
+        const actions = store.getActions()
         // We expect the resource to update the relations and the model optimistically
-        expect(iterator.next().value).toEqual(
-          select(relationResource.selectors.findById, resource.id)
+        expect(actions[0]).toEqual(
+          batchActions([
+            relationActionCreators.updateStart(normalisedModelData.entities.relation[1]),
+            relationActionCreators.updateStart(normalisedModelData.entities.relation[2])
+          ])
         )
-        expect(iterator.next(resource).value).toEqual(
-          put(
-            batchActions([
-              relationActionCreators.updateStart(normalisedModelData.entities.relation[1]),
-              relationActionCreators.updateStart(normalisedModelData.entities.relation[2])
-            ])
-          )
-        )
-        expect(iterator.next(resource).value).toEqual(
-          put(batchActions([actionCreators.updateStart(normalisedModelData.entities.model[1])]))
+        expect(actions[1]).toEqual(
+          batchActions([actionCreators.updateStart(normalisedModelData.entities.model[1])])
         )
 
-        const headers = new Headers()
-        headers.append('content-type', 'application/json')
-        // The data going to the endpoint should have been run through the transform function
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model/1', {
-            method: 'PUT',
-            body: JSON.stringify(resource),
-            headers
-          })
+        expect(actions[2]).toEqual(
+          batchActions([
+            actionCreators.updateSuccess(normalisedModelData.entities.relation[1], '1'),
+            actionCreators.updateSuccess(normalisedModelData.entities.relation[2], '2')
+          ])
         )
-        expect(iterator.next(response).value).toEqual(apply(response, response.json))
-        expect(iterator.next(response.json()).value).toEqual(
-          put(
-            batchActions([
-              actionCreators.updateSuccess(normalisedModelData.entities.relation[1], '1'),
-              actionCreators.updateSuccess(normalisedModelData.entities.relation[2], '2')
-            ])
-          )
+        expect(actions[3]).toEqual(
+          batchActions([actionCreators.updateSuccess(normalisedModelData.entities.model[1], '1')])
         )
-        expect(iterator.next().value).toEqual(
-          put(
-            batchActions([actionCreators.updateSuccess(normalisedModelData.entities.model[1], '1')])
-          )
-        )
-        expect(iterator.next().value).toEqual(call(noop, response.json().data))
       })
 
-      it('makes update requests and handles errors', () => {
-        const iterator = modelResource.workers.update(modelResource.actions.update({ resource }))
-        expect(iterator.next().value).toEqual(select(modelResource.selectors.findById, resource.id))
-        expect(iterator.next(resource).value).toEqual(put(actionCreators.updateStart(resource)))
-        const headers = new Headers()
-        headers.append('content-type', 'application/json')
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model/1', {
-            method: 'PUT',
-            body: JSON.stringify(resource),
-            headers
-          })
-        )
-        expect(iterator.next(invalidAPIResponse).value).toEqual(
-          put(actionCreators.updateError(errorMessage, resource))
-        )
-        expect(iterator.next().value).toEqual(call(noop, errorMessage))
+      it('makes update requests and handles errors', async () => {
+        console.log('hai')
+        const store = mockStore({
+          model: {
+            1: resource
+          }
+        })
+        fetchMock.mock('/api/model/1', 400, { method: 'PUT' })
+        await store.dispatch(modelResource.actions.update({ resource }))
+        // The first yield dispatches the start action.
+        const actions = store.getActions()
+        expect(actions[0]).toEqual(actionCreators.updateStart(resource))
+        expect(actions[1]).toEqual(actionCreators.updateError(errorMessage, resource))
       })
     })
 

@@ -282,7 +282,7 @@ function createAPIAction({
    * Accepts FSA containing a payload with property 'resource' containing request data.
    * Dispatches start (if applicable) action, makes HTTP calls, dispatches success/error actions with result.
    */
-  return ({ payload }: { payload: { resource: any; options: any } }) => async (
+  return (payload: { resource: any; options: any }) => async (
     dispatch: Dispatch<any>,
     getState: () => any
   ) => {
@@ -367,7 +367,6 @@ function createAPIAction({
 
     // Make the request and handle the response
     try {
-      console.log(baseUrl + requestString)
       const response = await fetch(baseUrl + requestString, requestOptions)
       const data = await getDataFromAPIResponse({
         resource: localResource,
