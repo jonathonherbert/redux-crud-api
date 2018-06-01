@@ -338,7 +338,6 @@ describe('createAPIResource', () => {
       })
 
       it('makes update requests and handles errors', async () => {
-        console.log('hai')
         const store = mockStore({
           model: {
             1: resource
@@ -354,196 +353,155 @@ describe('createAPIResource', () => {
     })
 
     describe('Create worker', () => {
-      it('makes create requests and handles valid responses', () => {
-        const iterator = modelResource.workers.create(
-          modelResource.actions.create({ resource: { ...resource, id: 'cid' } })
+      it('makes create requests and handles valid responses', async () => {
+        const store = mockStore()
+        fetchMock.mock(
+          (url, options) => {
+            const bodyContent = Object.assign({}, resource)
+            delete bodyContent.id
+            expect((options as any).body).toEqual(JSON.stringify(bodyContent))
+            return url === '/api/model'
+          },
+          resource,
+          { method: 'POST' }
         )
-        expect(iterator.next().value).toEqual(
-          put(
-            actionCreators.createStart({
-              ...resource,
-              id: 'cid'
-            })
-          )
-        )
-        const headers = new Headers()
-        headers.append('content-type', 'application/json')
-        const bodyContent = Object.assign({}, resource)
-        delete bodyContent.id
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model', {
-            method: 'POST',
-            body: JSON.stringify(bodyContent),
-            headers
-          })
-        )
-        expect(iterator.next(response).value).toEqual(apply(response, response.json))
-        expect(iterator.next(response.json()).value).toEqual(
-          put(actionCreators.createSuccess(resource, 'cid'))
-        )
-        expect(iterator.next().value).toEqual(call(noop, response.json().data))
+        await store.dispatch(modelResource.actions.create({ resource: { ...resource, id: 'cid' } }))
+        // The first yield dispatches the start action.
+        const actions = store.getActions()
+        expect(actions[1]).toEqual(actionCreators.createSuccess(resource, 'cid'))
       })
 
-      it('makes create requests and handles errors', () => {
-        const iterator = modelResource.workers.create(
-          modelResource.actions.create({ resource: { ...resource, id: 'cid' } })
+      it('makes create requests and handles errors', async () => {
+        const store = mockStore()
+        fetchMock.mock(
+          (url, options) => {
+            const bodyContent = Object.assign({}, resource)
+            delete bodyContent.id
+            expect((options as any).body).toEqual(JSON.stringify(bodyContent))
+            return url === '/api/model'
+          },
+          invalidAPIResponse,
+          { method: 'POST' }
         )
-        expect(iterator.next().value).toEqual(
-          put(
-            actionCreators.createStart({
-              ...resource,
-              id: 'cid'
-            })
-          )
+        await store.dispatch(modelResource.actions.create({ resource: { ...resource, id: 'cid' } }))
+        // The first yield dispatches the start action.
+        const actions = store.getActions()
+        expect(actions[1]).toEqual(
+          actionCreators.createError(errorMessage, { ...resource, id: 'cid' })
         )
-        const headers = new Headers()
-        headers.append('content-type', 'application/json')
-        const bodyContent = Object.assign({}, resource)
-        delete bodyContent.id
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model', {
-            method: 'POST',
-            body: JSON.stringify(bodyContent),
-            headers
-          })
-        )
-        expect(iterator.next(invalidAPIResponse).value).toEqual(
-          put(actionCreators.createError(errorMessage, { ...resource, id: 'cid' }))
-        )
-        expect(iterator.next().value).toEqual(call(noop, errorMessage))
       })
     })
 
     describe('Delete worker', () => {
-      it('Creates delete requests and handles valid responses', () => {
-        const iterator = modelResource.workers.del(modelResource.actions.del({ resource }))
-        expect(iterator.next().value).toEqual(put(actionCreators.deleteStart(resource)))
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model/1', { method: 'DELETE', headers: new Headers() })
-        )
-        expect(iterator.next({ status: 200 }).value).toEqual(
-          put(actionCreators.deleteSuccess(resource))
-        )
-        expect(iterator.next().value).toEqual(call(noop, resource))
+      it('Creates delete requests and handles valid responses', async () => {
+        const store = mockStore({
+          model: {
+            1: resource
+          }
+        })
+        fetchMock.mock('/api/model/1', 200, { method: 'DELETE' })
+        await store.dispatch(modelResource.actions.del({ resource }))
+        // The first yield dispatches the start action.
+        const actions = store.getActions()
+        expect(actions[0]).toEqual(actionCreators.deleteStart(resource))
+        expect(actions[1]).toEqual(actionCreators.deleteSuccess(resource))
       })
 
-      it('Creates delete requests and handles errors', () => {
-        const iterator = modelResource.workers.del(modelResource.actions.del({ resource }))
-        expect(iterator.next().value).toEqual(put(actionCreators.deleteStart(resource)))
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model/1', { method: 'DELETE', headers: new Headers() })
-        )
-        expect(iterator.next({ status: 400 }).value).toEqual(
-          put(actionCreators.deleteError(errorMessage, resource))
-        )
-        expect(iterator.next().value).toEqual(call(noop, errorMessage))
+      it('Creates delete requests and handles errors', async () => {
+        const store = mockStore({
+          model: {
+            1: resource
+          }
+        })
+        fetchMock.mock('/api/model/1', 400, { method: 'DELETE' })
+        await store.dispatch(modelResource.actions.del({ resource }))
+        // The first yield dispatches the start action.
+        const actions = store.getActions()
+        expect(actions[0]).toEqual(actionCreators.deleteStart(resource))
+        expect(actions[1]).toEqual(actionCreators.deleteError(errorMessage, resource))
       })
 
-      it("Creates delete requests and doesn't apply transforms to local data", () => {
-        const iterator = modelResourceWithTransforms.workers.del(
-          modelResourceWithTransforms.actions.del({ resource })
-        )
-        expect(iterator.next().value).toEqual(put(actionCreators.deleteStart(resource)))
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model/1', { method: 'DELETE', headers: new Headers() })
-        )
-        expect(iterator.next({ status: 200 }).value).toEqual(
-          put(actionCreators.deleteSuccess(resource))
-        )
-        expect(iterator.next().value).toEqual(call(noop, resource))
+      it("Creates delete requests and doesn't apply transforms to local data", async () => {
+        const store = mockStore({
+          model: {
+            1: resource
+          }
+        })
+        fetchMock.mock('/api/model/1', 200, { method: 'DELETE' })
+        await store.dispatch(modelResourceWithTransforms.actions.del({ resource }))
+        // The first yield dispatches the start action.
+        const actions = store.getActions()
+        expect(actions[0]).toEqual(actionCreators.deleteStart(resource))
+        expect(actions[1]).toEqual(actionCreators.deleteSuccess(resource))
       })
     })
 
     describe('Search worker', () => {
-      it('Creates search requests and handles valid responses', () => {
+      it('Creates search requests and handles valid responses', async () => {
         const searchParams = {
           dateFrom: '01/12/2016',
           dateTo: '02/12/2016'
         }
         const searchResponse = {
-          status: 200,
-          json: () => ({
-            data: [
-              {
-                id: 1,
-                exampleData: 'exampleData'
-              }
-            ]
-          })
+          data: [
+            {
+              id: 1,
+              exampleData: 'exampleData'
+            }
+          ]
         }
-        const iterator = modelResource.workers.search(
-          modelResource.actions.search({ resource: searchParams })
-        )
-        expect(iterator.next().value).toEqual(put(actionCreators.fetchStart(searchParams)))
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model/search?' + qs.stringify(searchParams), {
-            method: 'GET',
-            headers: new Headers()
-          })
-        )
-        expect(iterator.next(searchResponse).value).toEqual(
-          apply(searchResponse, searchResponse.json)
-        )
-        expect(iterator.next(searchResponse.json()).value).toEqual(
-          put(actionCreators.fetchSuccess(searchResponse.json().data))
-        )
-        expect(iterator.next().value).toEqual(call(noop, searchResponse.json().data))
+        const store = mockStore()
+        fetchMock.mock('/api/model', searchResponse)
+        await store.dispatch(modelResource.actions.fetch({ resource: searchParams }))
+
+        const actions = store.getActions()
+        expect(actions[0]).toEqual(actionCreators.fetchStart(searchParams))
+        expect(actions[1]).toEqual(actionCreators.fetchSuccess(searchResponse.data))
       })
 
-      it('Creates search requests and normalises responses', () => {
+      it('Creates search requests and normalises responses', async () => {
         const searchParams = {
           dateFrom: '01/12/2016',
           dateTo: '02/12/2016'
         }
 
-        const iterator = relationResource.workers.search(
-          modelResource.actions.search({ resource: searchParams })
-        )
-        expect(iterator.next().value).toEqual(put(actionCreators.fetchStart(searchParams)))
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model/search?' + qs.stringify(searchParams), {
-            method: 'GET',
-            headers: new Headers()
-          })
-        )
-        expect(iterator.next(response).value).toEqual(apply(response, response.json))
+        const store = mockStore()
+        fetchMock.mock('/api/model', response)
+        await store.dispatch(relationResource.actions.fetch({ resource: searchParams }))
 
-        // The first dispatched action should be the normalised relation data
-        expect(iterator.next(response.json()).value).toEqual(
-          put(
-            batchActions([
-              actionCreators.fetchSuccess(normalisedModelData.entities.relation[1]),
-              actionCreators.fetchSuccess(normalisedModelData.entities.relation[2])
-            ])
-          )
+        const actions = store.getActions()
+        expect(actions[0]).toEqual(actionCreators.fetchStart(searchParams))
+        expect(actions[1]).toEqual(
+          batchActions([
+            actionCreators.fetchSuccess(normalisedModelData.entities.relation[1]),
+            actionCreators.fetchSuccess(normalisedModelData.entities.relation[2])
+          ])
         )
-
-        // And the next should be the normalised model data
-        expect(iterator.next().value).toEqual(
-          put(batchActions([actionCreators.fetchSuccess(normalisedModelData.entities.model[1])]))
+        expect(actions[2]).toEqual(
+          batchActions([actionCreators.fetchSuccess(normalisedModelData.entities.model[1])])
         )
-        expect(iterator.next().value).toEqual(call(noop, response.json().data))
       })
 
-      it('Creates search requests and handles errors', () => {
+      it('Creates search requests and handles errors', async () => {
         const searchParams = {
           dateFrom: '01/12/2016',
           dateTo: '02/12/2016'
         }
-        const iterator = modelResource.workers.search(
-          modelResource.actions.search({ resource: searchParams })
-        )
-        expect(iterator.next().value).toEqual(put(actionCreators.fetchStart(searchParams)))
-        expect(iterator.next().value).toEqual(
-          call(fetch, '/api/model/search?' + qs.stringify(searchParams), {
-            method: 'GET',
-            headers: new Headers()
-          })
-        )
-        expect(iterator.next({ status: 400 }).value).toEqual(
-          put(actionCreators.fetchError(errorMessage))
-        )
-        expect(iterator.next().value).toEqual(call(noop, errorMessage))
+
+        const store = mockStore()
+        fetchMock.mock('/api/model', 400)
+        await store.dispatch(relationResource.actions.fetch({ resource: searchParams }))
+
+        const actions = store.getActions()
+        expect(actions[0]).toEqual(actionCreators.fetchStart(searchParams))
+        expect(actions[1]).toEqual(actionCreators.fetchError(errorMessage))
+
+        // expect(iterator.next().value).toEqual(
+        //   call(fetch, "/api/model/search?" + qs.stringify(searchParams), {
+        //     method: "GET",
+        //     headers: new Headers()
+        //   })
+        // );
       })
     })
   })
