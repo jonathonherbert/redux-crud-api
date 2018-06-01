@@ -7,13 +7,10 @@ import orderBy from 'lodash/orderBy'
 import { normalize, Schema } from 'normalizr'
 import * as qs from 'querystring'
 import { batchActions } from 'redux-batched-actions'
+import { Dispatch } from 'redux'
 import reduxCrud from 'redux-crud'
-import { takeLatest } from 'redux-saga'
-import { apply, call, put, select } from 'redux-saga/effects'
 import v4 from 'uuid/v4'
 import 'whatwg-fetch'
-
-import { createPromiseAction } from './utils/saga'
 
 // The names we use for actions don't map to the redux-crud action names, so we do that here.
 const mapActionToCRUDAction = {
@@ -76,8 +73,8 @@ interface IAPIAction {
   }
   meta: {
     // The function called when the saga is done
-    resolve: () => any
-    reject: () => any
+    resolve: (data: any) => any
+    reject: (reason: string) => any
   }
 }
 
@@ -114,7 +111,7 @@ const getContentType = (options?: IAPIActionOptions) => {
  * @param {IAPIOptions} options
  * @param selectAuthToken
  */
-const getRequestHeaders = (method: string, contentType: string, authToken: string) => {
+const getRequestHeaders = (method: string, contentType: string, authToken?: string) => {
   const headers = new Headers()
   if ((method === 'post' || method === 'put') && contentType !== 'multipart/form-data') {
     headers.append('content-type', contentType)
@@ -122,7 +119,7 @@ const getRequestHeaders = (method: string, contentType: string, authToken: strin
 
   // Add the authentication code to the header, if we have it
   if (authToken) {
-    headers.append('Authorization', `Bearer ${authToken}`)
+    headers.append('authorization', `Bearer ${authToken}`)
   }
   return headers
 }
@@ -167,7 +164,7 @@ const getRequestOptions = ({
   actionName: string
   contentType: string
   method: string
-  authToken: string
+  authToken?: string
 }) => {
   const requestOptions = {
     method: method.toUpperCase(),
@@ -228,7 +225,7 @@ const getRequestString = ({
 /**
  * Get data from the API response.
  */
-function* getDataFromAPIResponse({
+async function getDataFromAPIResponse({
   response,
   resource,
   actionName,
@@ -249,7 +246,7 @@ function* getDataFromAPIResponse({
     // We take the data from the 'data' envelope, if it exists,
     // or from the json directly if it doesn't.
     // It'd be good to let the user provide an envelope.
-    const json = yield apply(response, response.json)
+    const json: { data: any } = await response.json()
     data = json.data ? json.data : json
     // Apply transforms
     const dataIsArray = Array.isArray(data)
@@ -259,6 +256,7 @@ function* getDataFromAPIResponse({
       data = transformIn(data)
     }
   }
+  return data
 }
 
 /**
@@ -284,19 +282,23 @@ function createAPIAction({
    * Accepts FSA containing a payload with property 'resource' containing request data.
    * Dispatches start (if applicable) action, makes HTTP calls, dispatches success/error actions with result.
    */
-  return function*({ payload, meta: { resolve, reject } }: IAPIAction) {
+  return (payload: { resource: any; options: any }) => async (
+    dispatch: Dispatch<any>,
+    getState: () => any
+  ) => {
     // We store a client id here for optimistic creation
     let resource
     let options
     let cid
     let authToken
+    const state = getState()
     const relationKeys = {} as { [relationId: string]: any[] }
     const crudAction = mapActionToCRUDAction[actionName]
     if (payload) {
       ;({ resource, options } = payload)
     }
     if (selectAuthToken) {
-      authToken = yield select(selectAuthToken)
+      authToken = selectAuthToken(state)
     }
 
     let localResource = { ...resource }
@@ -308,9 +310,9 @@ function createAPIAction({
 
     // If we're updating a model, merge it with what's current in the state
     if (actionName === 'update') {
-      const modelFromState = yield select(selectors.findById, localResource.id)
+      const modelFromState = selectors.findById(state, localResource.id)
       if (!modelFromState) {
-        yield call(reject, `Could not select model with id ${resource.id}`)
+        throw new Error(`Could not select model with id ${resource.id}`)
       }
       localResource = { ...modelFromState, ...localResource }
     }
@@ -339,10 +341,10 @@ function createAPIAction({
             relationKeys[i].push(id)
             actions.push(relations.map[i][crudAction + 'Start'](relationData[id]))
           })
-          yield put(batchActions(actions))
+          dispatch(batchActions(actions))
         }
       } else {
-        yield put(actionCreators[crudAction + 'Start'](localResource))
+        dispatch(actionCreators[crudAction + 'Start'](localResource))
       }
     }
 
@@ -365,20 +367,19 @@ function createAPIAction({
 
     // Make the request and handle the response
     try {
-      const response = yield call(fetch, baseUrl + requestString, requestOptions)
-      const data = yield getDataFromAPIResponse({
+      const response = await fetch(baseUrl + requestString, requestOptions)
+      const data = await getDataFromAPIResponse({
         resource: localResource,
         response,
         actionName,
         transformIn
       })
-
       // If there aren't any relations or we're not running a fetch or update, do a basic persist
       if (!relations || (crudAction !== 'fetch' && crudAction !== 'update')) {
         if (actionName === 'create') {
-          yield put(actionCreators[crudAction + 'Success'](data, cid))
+          dispatch(actionCreators[crudAction + 'Success'](data, cid))
         } else {
-          yield put(actionCreators[crudAction + 'Success'](data))
+          dispatch(actionCreators[crudAction + 'Success'](data))
         }
       } else {
         // If we do have relations, normalise the incoming data, and dispatch persist
@@ -408,21 +409,18 @@ function createAPIAction({
               )
             }
           })
-          yield put(batchActions(actions))
+          dispatch(batchActions(actions))
         }
       }
       // Once we're done, call resolve for the Promise caller
-      yield call(resolve, data)
+      return data
     } catch (e) {
       if (method === 'get') {
-        yield put(actionCreators[crudAction + 'Error'](e.message))
+        dispatch(actionCreators[crudAction + 'Error'](e.message))
       } else {
         // Methods that persist data require the resource to revert optimistic updates
-        yield put(actionCreators[crudAction + 'Error'](e.message, localResource))
+        dispatch(actionCreators[crudAction + 'Error'](e.message, localResource))
       }
-
-      // Call reject for the Promise caller
-      yield call(reject, e.message)
     }
   }
 }
@@ -529,9 +527,7 @@ function createAPIResource({
   const actionCreators = reduxCrud.actionCreatorsFor(resourceName)
   const selectors = createSelectors(resourceName)
   const apiResource = {
-    workers: {} as { [action: string]: any },
-    sagas: {} as { [action: string]: any },
-    actions: actionCreators as any,
+    actions: {} as { [action: string]: any },
     actionNames: reduxCrud.actionTypesFor(resourceName),
     selectors,
     reducers: reduxCrud.Map.reducersFor(resourceName)
@@ -548,12 +544,6 @@ function createAPIResource({
       actionName
     ] = `${resourceName.toUpperCase()}_${actionName.toUpperCase()}`
 
-    // Create the request FSA
-    apiResource.actions[actionName] = createPromiseAction(
-      apiResource.actionNames[actionName],
-      identity
-    )
-
     // If we've got relations, add the root relation to the relations map.
     // This saves us doing it for every persist operation, and lets us iterate
     // over the whole resource with the relations map.
@@ -562,7 +552,7 @@ function createAPIResource({
     }
 
     // Create the worker saga
-    apiResource.workers[actionName] = createAPIAction({
+    apiResource.actions[actionName] = createAPIAction({
       resourceName,
       baseUrl,
       actionCreators,
@@ -574,11 +564,6 @@ function createAPIResource({
       transformIn: options.transformIn || identity,
       transformOut: options.transformOut || identity
     })
-
-    // Create the watcher saga
-    apiResource.sagas[actionName] = function*() {
-      yield call(takeLatest, apiResource.actionNames[actionName], apiResource.workers[actionName])
-    }
   })
   return apiResource
 }
