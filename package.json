@@ -6,9 +6,7 @@
   "main": "dist/redux-crud-api.umd.js",
   "module": "dist/redux-crud-api.es5.js",
   "typings": "dist/types/redux-crud-api.d.ts",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "author": " <jonathon.herbert@newicon.net>",
   "repository": {
     "type": "git",
@@ -21,7 +19,7 @@
   "scripts": {
     "lint": "tslint -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
     "prebuild": "rimraf dist",
-    "build": "tsc --module commonjs --outDir dist/lib && rollup -c rollup.config.ts && typedoc --out dist/docs --target es6 --theme minimal --mode file src",
+    "build": "tsc --module commonjs --outDir dist/lib && rollup -c rollup.config.ts",
     "start": "rollup -c rollup.config.ts -w",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -34,10 +32,7 @@
     "precommit": "lint-staged"
   },
   "lint-staged": {
-    "{src,test}/**/*.ts": [
-      "prettier --write --no-semi --single-quote",
-      "git add"
-    ]
+    "{src,test}/**/*.ts": ["prettier --write --no-semi --single-quote", "git add"]
   },
   "config": {
     "commitizen": {
@@ -45,7 +40,8 @@
     },
     "validate-commit-msg": {
       "types": "conventional-commit-types",
-      "helpMessage": "Use \"npm run commit\" instead, we use conventional-changelog format :) (https://github.com/commitizen/cz-cli)"
+      "helpMessage":
+        "Use \"npm run commit\" instead, we use conventional-changelog format :) (https://github.com/commitizen/cz-cli)"
     }
   },
   "jest": {
@@ -53,15 +49,8 @@
       ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
     "testRegex": "src/.*\\.spec\\.ts$",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/*.spec.*"
-    ],
+    "moduleFileExtensions": ["ts", "tsx", "js"],
+    "coveragePathIgnorePatterns": ["/node_modules/", "/*.spec.*"],
     "coverageThreshold": {
       "global": {
         "branches": 70,
@@ -76,8 +65,6 @@
   "dependencies": {
     "lodash": "4.x",
     "normalizr": "3.x",
-    "redux": "3.x",
-    "redux-actions": "2.x",
     "redux-batched-actions": "0.2.x",
     "redux-crud": "3.2.0",
     "uuid": "3.2.x",
@@ -104,6 +91,7 @@
     "node-fetch": "^2.1.2",
     "prettier": "^1.4.4",
     "prompt": "^1.0.0",
+    "redux": "^4.0.0",
     "redux-mock-store": "^1.5.1",
     "redux-thunk": "^2.3.0",
     "replace-in-file": "^3.0.0-beta.2",
@@ -119,8 +107,8 @@
     "tslint": "^5.8.0",
     "tslint-config-prettier": "^1.1.0",
     "tslint-config-standard": "^7.0.0",
-    "typedoc": "^0.10.0",
-    "typescript": "^2.6.2",
+    "typedoc": "^0.11.1",
+    "typescript": "^2.9.1",
     "validate-commit-msg": "^2.12.2"
   }
 }
