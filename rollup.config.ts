@@ -1,41 +1,39 @@
-import resolve from 'rollup-plugin-node-resolve'
-import commonjs from 'rollup-plugin-commonjs'
-import sourceMaps from 'rollup-plugin-sourcemaps'
-import camelCase from 'lodash.camelcase'
-import typescript from 'rollup-plugin-typescript2'
+import resolve from "rollup-plugin-node-resolve";
+import commonjs from "rollup-plugin-commonjs";
+import sourceMaps from "rollup-plugin-sourcemaps";
+import camelCase from "lodash.camelcase";
+import typescript from "rollup-plugin-typescript2";
 
-const pkg = require('./package.json')
+const pkg = require("./package.json");
 
-const libraryName = 'redux-crud-api'
+const libraryName = "redux-crud-api";
 
 export default {
   input: `src/${libraryName}.ts`,
   output: [
-    { file: pkg.main, name: camelCase(libraryName), format: 'umd' },
-    { file: pkg.module, format: 'es' },
+    { file: pkg.main, name: camelCase(libraryName), format: "umd" },
+    { file: pkg.module, format: "es" }
   ],
   sourcemap: true,
   // Indicate here external modules you don't wanna include in your bundle (i.e.: 'lodash')
   external: [
-    'normalizr',
-    'redux',
-    'redux-actions',
-    'redux-batched-actions',
-    'redux-crud',
-    'redux-saga',
-    'redux-saga/effects',
-    'uuid/v4',
-    'whatwg-fetch',
-    'lodash',
-    'lodash/filter',
-    'lodash/find',
-    'lodash/identity',
-    'lodash/kebabCase',
-    'lodash/noop',
-    'lodash/orderBy'
+    "normalizr",
+    "redux",
+    "redux-actions",
+    "redux-crud",
+    "redux-batched-actions",
+    "uuid/v4",
+    "whatwg-fetch",
+    "lodash",
+    "lodash/filter",
+    "lodash/find",
+    "lodash/identity",
+    "lodash/kebabCase",
+    "lodash/noop",
+    "lodash/orderBy"
   ],
   watch: {
-    include: 'src/**',
+    include: "src/**"
   },
   plugins: [
     // Compile TypeScript files
@@ -48,5 +46,5 @@ export default {
     resolve(),
     // Resolve source maps to the original source
     sourceMaps()
-  ],
-}
+  ]
+};
