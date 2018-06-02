@@ -8,12 +8,11 @@ import 'whatwg-fetch'
 import configureStore from 'redux-mock-store'
 import thunk from 'redux-thunk'
 
-import createAPIResource from './createAPIResource'
+import createAPIResource, { createActionCreators, createReducer } from './createAPIResource'
 
 let modelResource: any
 let modelResourceWithTransforms: any
 let relationResource: any
-let actionTypes
 let actionCreators: any
 let relationActionCreators: any
 const baseUrl = '/api'
@@ -39,22 +38,24 @@ const resource = {
 
 const state = {
   [resourceName]: {
-    1: {
-      id: 1,
-      name: 'example1'
-    },
-    2: {
-      id: 2,
-      name: 'example2'
-    },
-    3: {
-      id: 3,
-      name: 'example3'
-    },
-    4: {
-      id: 4,
-      _cid: 'exampleCid',
-      name: 'clientGeneratedExample4'
+    records: {
+      1: {
+        id: 1,
+        name: 'example1'
+      },
+      2: {
+        id: 2,
+        name: 'example2'
+      },
+      3: {
+        id: 3,
+        name: 'example3'
+      },
+      4: {
+        id: 4,
+        _cid: 'exampleCid',
+        name: 'clientGeneratedExample4'
+      }
     }
   }
 }
@@ -87,6 +88,7 @@ const modelSchema = new schema.Entity('model', {
 })
 
 const normalisedModelData = normalize(resource, modelSchema)
+const reducer = createReducer(resourceName)
 
 // Unnormalised data
 modelResource = createAPIResource({ resourceName, baseUrl })
@@ -95,11 +97,10 @@ modelResourceWithTransforms = createAPIResource({
   baseUrl,
   options: { transformIn, transformOut }
 })
-actionTypes = reduxCrud.actionTypesFor(resourceName)
-actionCreators = reduxCrud.actionCreatorsFor(resourceName)
+actionCreators = createActionCreators(resourceName)
 
 // Normalised data
-relationActionCreators = reduxCrud.actionCreatorsFor(resourceName)
+relationActionCreators = createActionCreators(resourceName)
 relationResource = createAPIResource({
   resourceName,
   baseUrl,
@@ -110,12 +111,34 @@ relationResource = createAPIResource({
 })
 
 describe('createAPIResource', () => {
+  const _now = Date.now
+  beforeAll(() => {
+    Date.now = jest.fn(() => 1337)
+  })
+  afterAll(() => {
+    Date.now = _now
+  })
+  describe('createAPIResource', () => {
+    it('should throw if asked to instantiate with invalid actions', () => {
+      expect(() =>
+        createAPIResource({ resourceName, baseUrl, actions: ['invalid'] as any })
+      ).toThrowError('not supported')
+    })
+  })
+
+  describe('Reducer', () => {
+    it('should add a lastFetch time when consuming SUCCESS actions', () => {
+      expect(reducer(undefined, actionCreators.fetchSuccess(resource)).lastFetch).toBe(1337)
+    })
+  })
   describe('Selectors', () => {
     it('should have a selector that fetches models by id', () => {
-      expect(modelResource.selectors.findById(state, 1)).toEqual(state[resourceName][1])
+      expect(modelResource.selectors.findById(state, 1)).toEqual(state[resourceName].records[1])
     })
     it('should have a selector that fetches models by cid', () => {
-      expect(modelResource.selectors.findByCid(state, 'exampleCid')).toEqual(state[resourceName][4])
+      expect(modelResource.selectors.findByCid(state, 'exampleCid')).toEqual(
+        state[resourceName].records[4]
+      )
     })
     it('should have a selector that filters by predicate', () => {
       expect(modelResource.selectors.filter(state, (item: any) => item.id > 2).length).toBe(2)
@@ -123,8 +146,146 @@ describe('createAPIResource', () => {
         modelResource.selectors.filter(state, (item: any) => item.name.includes('example')).length
       ).toBe(3)
     })
+    it('should have a selector that orders by iteratee and direction', () => {
+      expect(
+        modelResource.selectors.orderBy(state, 'id', 'asc').map((record: any) => record.id)
+      ).toEqual([1, 2, 3, 4])
+      expect(
+        modelResource.selectors.orderBy(state, 'id', 'desc').map((record: any) => record.id)
+      ).toEqual([4, 3, 2, 1])
+    })
     it('should have a selector that returns all of the things', () => {
-      expect(modelResource.selectors.findAll(state)).toEqual(state[resourceName])
+      expect(modelResource.selectors.findAll(state)).toEqual(state[resourceName].records)
+    })
+    it('should have a selector that returns the last fetch time', () => {
+      expect(
+        modelResource.selectors.lastFetch({
+          model: {
+            records: {
+              1: { busy: true }
+            },
+            lastFetch: 1337
+          }
+        })
+      ).toBe(1337)
+    })
+    it('should have a selector that returns if a record is marked busy', () => {
+      expect(
+        modelResource.selectors.isBusy(
+          {
+            model: {
+              records: {
+                1: { busy: true }
+              }
+            }
+          },
+          1
+        )
+      ).toBe(true)
+      expect(
+        modelResource.selectors.isBusy(
+          {
+            model: {
+              records: {
+                1: { busy: false }
+              }
+            }
+          },
+          1
+        )
+      ).toBe(false)
+    })
+    it('should have a selector that returns if a record is marked pendingUpdate', () => {
+      expect(
+        modelResource.selectors.isPendingUpdate(
+          {
+            model: {
+              records: {
+                1: { pendingUpdate: true }
+              }
+            }
+          },
+          1
+        )
+      ).toBe(true)
+      expect(
+        modelResource.selectors.isPendingUpdate(
+          {
+            model: {
+              records: {
+                1: { pendingUpdate: false }
+              }
+            }
+          },
+          1
+        )
+      ).toBe(false)
+    })
+    it('should have a selector that returns if a record is marked pendingCreate', () => {
+      expect(
+        modelResource.selectors.isPendingCreate(
+          {
+            model: {
+              records: {
+                1: { pendingCreate: true }
+              }
+            }
+          },
+          1
+        )
+      ).toBe(true)
+      expect(
+        modelResource.selectors.isPendingCreate(
+          {
+            model: {
+              records: {
+                1: { pendingCreate: false }
+              }
+            }
+          },
+          1
+        )
+      ).toBe(false)
+    })
+    it('should have a selector that returns if any record is busy', () => {
+      expect(
+        modelResource.selectors.isResourceBusy(
+          {
+            model: {
+              records: {
+                1: { busy: true }
+              }
+            }
+          },
+          1
+        )
+      ).toBe(true)
+      expect(
+        modelResource.selectors.isResourceBusy(
+          {
+            model: {
+              records: {
+                1: { busy: true },
+                2: { busy: false }
+              }
+            }
+          },
+          1
+        )
+      ).toBe(true)
+      expect(
+        modelResource.selectors.isResourceBusy(
+          {
+            model: {
+              records: {
+                1: { busy: false },
+                2: { busy: false }
+              }
+            }
+          },
+          1
+        )
+      ).toBe(false)
     })
   })
 
@@ -135,7 +296,6 @@ describe('createAPIResource', () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', arrayResponse)
         await store.dispatch(modelResource.actions.fetch({ resource }))
-        // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         expect(actions[1]).toEqual(actionCreators.fetchSuccess(arrayResponse.data))
@@ -145,7 +305,7 @@ describe('createAPIResource', () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', arrayResponse)
         const result = await store.dispatch(modelResourceWithTransforms.actions.fetch({ resource }))
-        // The first yield dispatches the start action.
+
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         expect(actions[1]).toEqual(
@@ -160,7 +320,6 @@ describe('createAPIResource', () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', responseNoEnvelope)
         await store.dispatch(modelResource.actions.fetch({ resource }))
-        // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         expect(actions[1]).toEqual(actionCreators.fetchSuccess(responseNoEnvelope))
@@ -170,7 +329,6 @@ describe('createAPIResource', () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', arrayResponse)
         await store.dispatch(relationResource.actions.fetch({ resource }))
-        // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         // The first dispatched action should be the normalised relation data
@@ -190,7 +348,6 @@ describe('createAPIResource', () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', 400)
         await store.dispatch(modelResource.actions.fetch({ resource }))
-        // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         expect(actions[1]).toEqual(actionCreators.fetchError(errorMessage))
@@ -206,7 +363,6 @@ describe('createAPIResource', () => {
         })
         fetchMock.mock('/api/model/1', arrayResponse)
         await store.dispatch(modelResourceWithAuth.actions.fetch({ resource }))
-        // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         expect(actions[1]).toEqual(actionCreators.fetchSuccess(arrayResponse.data))
@@ -226,7 +382,7 @@ describe('createAPIResource', () => {
             options: { endpoint: 'recent' }
           })
         )
-        // The first yield dispatches the start action.
+
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         expect(actions[1]).toEqual(actionCreators.fetchSuccess(arrayResponse.data))
@@ -237,12 +393,11 @@ describe('createAPIResource', () => {
       it('makes update requests and handles valid responses', async () => {
         const store = mockStore({
           model: {
-            1: {}
+            records: { 1: {} }
           }
         })
         fetchMock.mock('/api/model/1', response, { method: 'PUT' })
         await store.dispatch(modelResource.actions.update({ resource }))
-        // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.updateStart(resource))
         expect(actions[1]).toEqual(actionCreators.updateSuccess(response.data))
@@ -251,7 +406,9 @@ describe('createAPIResource', () => {
       it('makes update requests and merges existing model with updates', async () => {
         const store = mockStore({
           model: {
-            1: { ...resource, isMerged: true }
+            records: {
+              1: { ...resource, isMerged: true }
+            }
           }
         })
         fetchMock.mock(
@@ -264,20 +421,21 @@ describe('createAPIResource', () => {
           { method: 'PUT' }
         )
         await store.dispatch(modelResource.actions.update({ resource }))
-        // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.updateStart({ ...resource, isMerged: true }))
       })
 
-      it('should throw if the model being updated cannot be found in the local state	', async () => {
+      it('should throw if the model being updated cannot be found in the local state', async () => {
         const store = mockStore()
-        return expect(store.dispatch(modelResource.actions.update({ resource }))).rejects
+        return expect(() => store.dispatch(modelResource.actions.update({ resource }))).rejects
       })
 
       it('makes update requests and apply transformations', async () => {
         const store = mockStore({
           model: {
-            1: resource
+            records: {
+              1: resource
+            }
           }
         })
         fetchMock.mock(
@@ -291,7 +449,6 @@ describe('createAPIResource', () => {
         )
 
         await store.dispatch(modelResourceWithTransforms.actions.update({ resource }))
-        // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.updateStart(resource))
       })
@@ -299,7 +456,9 @@ describe('createAPIResource', () => {
       it('makes update requests and applies relations on optimistic update', async () => {
         const store = mockStore({
           model: {
-            1: resource
+            records: {
+              1: resource
+            }
           }
         })
         fetchMock.mock(
@@ -313,7 +472,6 @@ describe('createAPIResource', () => {
         )
 
         await store.dispatch(relationResource.actions.update({ resource }))
-
         const actions = store.getActions()
         // We expect the resource to update the relations and the model optimistically
         expect(actions[0]).toEqual(
@@ -340,12 +498,13 @@ describe('createAPIResource', () => {
       it('makes update requests and handles errors', async () => {
         const store = mockStore({
           model: {
-            1: resource
+            records: {
+              1: resource
+            }
           }
         })
         fetchMock.mock('/api/model/1', 400, { method: 'PUT' })
         await store.dispatch(modelResource.actions.update({ resource }))
-        // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.updateStart(resource))
         expect(actions[1]).toEqual(actionCreators.updateError(errorMessage, resource))
@@ -366,7 +525,7 @@ describe('createAPIResource', () => {
           { method: 'POST' }
         )
         await store.dispatch(modelResource.actions.create({ resource: { ...resource, id: 'cid' } }))
-        // The first yield dispatches the start action.
+
         const actions = store.getActions()
         expect(actions[1]).toEqual(actionCreators.createSuccess(resource, 'cid'))
       })
@@ -384,7 +543,7 @@ describe('createAPIResource', () => {
           { method: 'POST' }
         )
         await store.dispatch(modelResource.actions.create({ resource: { ...resource, id: 'cid' } }))
-        // The first yield dispatches the start action.
+
         const actions = store.getActions()
         expect(actions[1]).toEqual(
           actionCreators.createError(errorMessage, { ...resource, id: 'cid' })
@@ -401,7 +560,6 @@ describe('createAPIResource', () => {
         })
         fetchMock.mock('/api/model/1', 200, { method: 'DELETE' })
         await store.dispatch(modelResource.actions.del({ resource }))
-        // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.deleteStart(resource))
         expect(actions[1]).toEqual(actionCreators.deleteSuccess(resource))
@@ -415,7 +573,6 @@ describe('createAPIResource', () => {
         })
         fetchMock.mock('/api/model/1', 400, { method: 'DELETE' })
         await store.dispatch(modelResource.actions.del({ resource }))
-        // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.deleteStart(resource))
         expect(actions[1]).toEqual(actionCreators.deleteError(errorMessage, resource))
@@ -429,7 +586,6 @@ describe('createAPIResource', () => {
         })
         fetchMock.mock('/api/model/1', 200, { method: 'DELETE' })
         await store.dispatch(modelResourceWithTransforms.actions.del({ resource }))
-        // The first yield dispatches the start action.
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.deleteStart(resource))
         expect(actions[1]).toEqual(actionCreators.deleteSuccess(resource))
@@ -453,7 +609,6 @@ describe('createAPIResource', () => {
         const store = mockStore()
         fetchMock.mock('/api/model', searchResponse)
         await store.dispatch(modelResource.actions.fetch({ resource: searchParams }))
-
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(searchParams))
         expect(actions[1]).toEqual(actionCreators.fetchSuccess(searchResponse.data))
@@ -468,7 +623,6 @@ describe('createAPIResource', () => {
         const store = mockStore()
         fetchMock.mock('/api/model', response)
         await store.dispatch(relationResource.actions.fetch({ resource: searchParams }))
-
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(searchParams))
         expect(actions[1]).toEqual(
@@ -491,17 +645,9 @@ describe('createAPIResource', () => {
         const store = mockStore()
         fetchMock.mock('/api/model', 400)
         await store.dispatch(relationResource.actions.fetch({ resource: searchParams }))
-
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(searchParams))
         expect(actions[1]).toEqual(actionCreators.fetchError(errorMessage))
-
-        // expect(iterator.next().value).toEqual(
-        //   call(fetch, "/api/model/search?" + qs.stringify(searchParams), {
-        //     method: "GET",
-        //     headers: new Headers()
-        //   })
-        // );
       })
     })
   })
