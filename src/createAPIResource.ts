@@ -644,6 +644,7 @@ function createAPIResource<IResource extends IBaseResource>({
   const actionNames = reduxCrud.actionTypesFor(resourceName)
   const apiResource = {
     actions: {} as { [action: string]: any },
+    actionNames: {} as { [actionName: string]: string },
     selectors,
     reducers: createReducer<IResource, TActions>(resourceName)
   }
@@ -660,6 +661,8 @@ function createAPIResource<IResource extends IBaseResource>({
     if (relations) {
       relations.map[resourceName] = actionCreators
     }
+
+    apiResource.actionNames = actionNames
 
     // Create the worker saga
     apiResource.actions[actionName] = createAPIAction({
