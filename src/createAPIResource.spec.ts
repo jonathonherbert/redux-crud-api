@@ -6,6 +6,7 @@ import reduxCrud from 'redux-crud'
 import fetchMock from 'fetch-mock'
 import configureStore from 'redux-mock-store'
 import thunk from 'redux-thunk'
+import 'whatwg-fetch'
 
 import createAPIResource, { createActionCreators, createReducer } from './createAPIResource'
 import { createCipher } from 'crypto'

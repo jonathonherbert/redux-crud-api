@@ -6,7 +6,9 @@
   "main": "dist/redux-crud-api.umd.js",
   "module": "dist/redux-crud-api.es5.js",
   "typings": "dist/types/redux-crud-api.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "author": " <jonathon.herbert@newicon.net>",
   "repository": {
     "type": "git",
@@ -32,7 +34,10 @@
     "precommit": "lint-staged"
   },
   "lint-staged": {
-    "{src,test}/**/*.ts": ["prettier --write --no-semi --single-quote", "git add"]
+    "{src,test}/**/*.ts": [
+      "prettier --write --no-semi --single-quote",
+      "git add"
+    ]
   },
   "config": {
     "commitizen": {
@@ -40,8 +45,7 @@
     },
     "validate-commit-msg": {
       "types": "conventional-commit-types",
-      "helpMessage":
-        "Use \"npm run commit\" instead, we use conventional-changelog format :) (https://github.com/commitizen/cz-cli)"
+      "helpMessage": "Use \"npm run commit\" instead, we use conventional-changelog format :) (https://github.com/commitizen/cz-cli)"
     }
   },
   "jest": {
@@ -49,8 +53,15 @@
       ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
     "testRegex": "src/.*\\.spec\\.ts$",
-    "moduleFileExtensions": ["ts", "tsx", "js"],
-    "coveragePathIgnorePatterns": ["/node_modules/", "/*.spec.*"],
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/*.spec.*"
+    ],
     "coverageThreshold": {
       "global": {
         "branches": 70,
@@ -63,12 +74,11 @@
     "mapCoverage": true
   },
   "dependencies": {
-    "uuid": "3.2.x",
-    "whatwg-fetch": "2.x",
+    "lodash": "4.x",
+    "normalizr": "3.x",
     "redux-batched-actions": "0.2.x",
     "redux-crud": "3.2.0",
-    "lodash": "4.x",
-    "normalizr": "3.x"
+    "uuid": "3.2.x"
   },
   "devDependencies": {
     "@types/fetch-mock": "^6.0.3",
@@ -109,6 +119,7 @@
     "tslint-config-standard": "^7.0.0",
     "typedoc": "^0.11.1",
     "typescript": "^2.9.1",
-    "validate-commit-msg": "^2.12.2"
+    "validate-commit-msg": "^2.12.2",
+    "whatwg-fetch": "^2.0.4"
   }
 }

@@ -11,7 +11,6 @@ import { batchActions } from 'redux-batched-actions'
 import { Dispatch } from 'redux'
 import reduxCrud from 'redux-crud'
 import v4 from 'uuid/v4'
-import 'whatwg-fetch'
 
 // The names we use for actions don't map to the redux-crud action names, so we do that here.
 export const mapActionToCRUDAction = {
