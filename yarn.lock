@@ -196,9 +196,9 @@ acorn@^5.0.0, acorn@^5.2.1, acorn@^5.3.0:
   version "5.5.3"
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-5.5.3.tgz#f473dd47e0277a08e28e9bec5aeeb04751f0b8c9"
 
-action-names@^0.3.2:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/action-names/-/action-names-0.3.2.tgz#533730b5d206ce56a6a1c7c507901b34ee18c865"
+action-names@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/action-names/-/action-names-0.4.0.tgz#d8dbb58d24e281c379203e8f330b1f7321a416a2"
   dependencies:
     lodash.snakecase "^3.0.1"
     lodash.trim "^3.0.1"
@@ -3994,9 +3994,9 @@ quick-lru@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/quick-lru/-/quick-lru-1.1.0.tgz#4360b17c61136ad38078397ff11416e186dcfbb8"
 
-ramda@^0.23.0:
-  version "0.23.0"
-  resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.23.0.tgz#ccd13fff73497a93974e3e86327bfd87bd6e8e2b"
+ramda@^0.24.1:
+  version "0.24.1"
+  resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.24.1.tgz#c3b7755197f35b8dc3502228262c4c91ddb6b857"
 
 randomatic@^1.1.3:
   version "1.1.7"
@@ -4100,13 +4100,13 @@ redux-batched-actions@0.2.x:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/redux-batched-actions/-/redux-batched-actions-0.2.1.tgz#d0c41d495a934004cabafbe0e851746d1795e9dd"
 
-redux-crud@3.2.0:
+"redux-crud@git://github.com/Versent/redux-crud.git#d558117":
   version "3.2.0"
-  resolved "https://registry.yarnpkg.com/redux-crud/-/redux-crud-3.2.0.tgz#4dd7fe5b2bab87f4e24009a6aba670a63f571acb"
+  resolved "git://github.com/Versent/redux-crud.git#d5581179a135ff84599ebe8c280faef5679d6786"
   dependencies:
-    action-names "^0.3.2"
+    action-names "^0.4.0"
     invariant "^2.1.0"
-    ramda "^0.23.0"
+    ramda "^0.24.1"
 
 redux-mock-store@^1.5.1:
   version "1.5.1"

@@ -1,6 +1,6 @@
-import { ObjectIterator } from "lodash";
-import { Schema } from "normalizr";
-import "whatwg-fetch";
+import { ObjectIterator } from 'lodash';
+import { Schema } from 'normalizr';
+import 'whatwg-fetch';
 export declare const mapActionToCRUDAction: {
     create: string;
     del: string;
@@ -65,71 +65,7 @@ export declare const createReducer: <IResource extends IBaseResource, IAction ex
  * We augment some of the default 'success' action creators here to include a time property,
  * which lets the reducer store staleness information.
  */
-export declare const createActionCreators: (resourceName: string) => {
-    fetchStart(data?: any): {
-        data: any;
-        type: any;
-    };
-    fetchSuccess(records?: {}[] | undefined, data?: any): {
-        data: any;
-        records: {}[];
-        type: any;
-    };
-    fetchError(error?: any, data?: any): {
-        data: any;
-        error: any;
-        type: any;
-    };
-    createStart(record?: {} | undefined, data?: any): {
-        data: any;
-        record: {};
-        type: any;
-    };
-    createSuccess(record?: {} | undefined, clientGeneratedKey?: any, data?: any): {
-        cid: any;
-        data: any;
-        record: {};
-        type: any;
-    };
-    createError(error?: any, record?: {} | undefined, data?: any): {
-        data: any;
-        error: any;
-        record: {};
-        type: any;
-    };
-    updateStart(record?: {} | undefined, data?: any): {
-        data: any;
-        record: {};
-        type: any;
-    };
-    updateSuccess(record?: {} | undefined, data?: any): {
-        data: any;
-        record: {};
-        type: any;
-    };
-    updateError(error?: any, record?: {} | undefined, data?: any): {
-        data: any;
-        error: any;
-        record: {};
-        type: any;
-    };
-    deleteStart(record?: {} | undefined, data?: any): {
-        data: any;
-        record: {};
-        type: any;
-    };
-    deleteSuccess(record?: {} | undefined, data?: any): {
-        data: any;
-        record: {};
-        type: any;
-    };
-    deleteError(error?: any, record?: {} | undefined, data?: any): {
-        data: any;
-        error: any;
-        record: {};
-        type: any;
-    };
-};
+export declare const createActionCreators: (resourceName: string) => any;
 /**
  * Creates an object with api methods keyed by name.
  * All of these actions can be dispatched as normal.
@@ -141,6 +77,9 @@ export declare const createActionCreators: (resourceName: string) => {
 declare function createAPIResource<IResource extends IBaseResource>({ resourceName, baseUrl, actions, selectAuthToken, relations, options }: ICreateAPIResourceOptions): {
     actions: {
         [action: string]: any;
+    };
+    actionNames: {
+        [actionName: string]: string;
     };
     selectors: {
         /**
@@ -170,31 +109,6 @@ declare function createAPIResource<IResource extends IBaseResource>({ resourceNa
         isPendingCreate(state: any, id: string): boolean;
         lastFetch(state: any): number | null;
     };
-    reducers: (state: IState<IResource> | undefined, action: {
-        data: any;
-        type: any;
-    } | {
-        data: any;
-        error: any;
-        type: any;
-    } | {
-        data: any;
-        records: {}[];
-        type: any;
-    } | {
-        data: any;
-        record: {};
-        type: any;
-    } | {
-        cid: any;
-        data: any;
-        record: {};
-        type: any;
-    } | {
-        data: any;
-        error: any;
-        record: {};
-        type: any;
-    }) => IState<IResource>;
+    reducers: (state: IState<IResource> | undefined, action: any) => IState<IResource>;
 };
 export default createAPIResource;
