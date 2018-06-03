@@ -4,7 +4,6 @@ import * as qs from 'querystring'
 import { batchActions } from 'redux-batched-actions'
 import reduxCrud from 'redux-crud'
 import fetchMock from 'fetch-mock'
-import 'whatwg-fetch'
 import configureStore from 'redux-mock-store'
 import thunk from 'redux-thunk'
 
