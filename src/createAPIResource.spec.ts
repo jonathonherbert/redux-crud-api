@@ -1,4 +1,4 @@
-import noop from 'lodash-es/noop'
+import noop from 'lodash/noop'
 import { normalize, schema } from 'normalizr'
 import * as qs from 'querystring'
 import { batchActions } from 'redux-batched-actions'

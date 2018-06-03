@@ -1,1 +1,1 @@
-export {};
+import 'whatwg-fetch';

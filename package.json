@@ -63,16 +63,16 @@
     "mapCoverage": true
   },
   "dependencies": {
-    "lodash-es": "^4.17.10",
-    "normalizr": "3.x",
+    "uuid": "3.2.x",
+    "whatwg-fetch": "2.x",
     "redux-batched-actions": "0.2.x",
     "redux-crud": "3.2.0",
-    "uuid": "3.2.x"
+    "lodash": "4.x",
+    "normalizr": "3.x"
   },
   "devDependencies": {
     "@types/fetch-mock": "^6.0.3",
     "@types/jest": "^22.0.0",
-    "@types/lodash-es": "^4.17.0",
     "@types/lodash": "^4.14.102",
     "@types/node": "^9.3.0",
     "@types/redux-actions": "^2.2.4",

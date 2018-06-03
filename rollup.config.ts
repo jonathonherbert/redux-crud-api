@@ -24,13 +24,13 @@ export default {
     "redux-batched-actions",
     "uuid/v4",
     "whatwg-fetch",
-    "lodash-es",
-    "lodash-es/filter",
-    "lodash-es/find",
-    "lodash-es/identity",
-    "lodash-es/kebabCase",
-    "lodash-es/noop",
-    "lodash-es/orderBy"
+    "lodash",
+    "lodash/filter",
+    "lodash/find",
+    "lodash/identity",
+    "lodash/kebabCase",
+    "lodash/noop",
+    "lodash/orderBy"
   ],
   watch: {
     include: "src/**"

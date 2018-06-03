@@ -1,7 +1,7 @@
-import { ObjectIterator } from "lodash";
-import { Schema } from "normalizr";
-import { Dispatch } from "redux";
-import "whatwg-fetch";
+import { ObjectIterator } from 'lodash';
+import { Schema } from 'normalizr';
+import { Dispatch } from 'redux';
+import 'whatwg-fetch';
 export declare const mapActionToCRUDAction: {
     create: string;
     del: string;
