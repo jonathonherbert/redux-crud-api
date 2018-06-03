@@ -498,7 +498,8 @@ function createAPIResource(_a) {
     var selectors = createSelectors(resourceName);
     var actionNames = reduxCrud.actionTypesFor(resourceName);
     var apiResource = {
-        actions: {},
+        thunks: {},
+        actions: actionCreators,
         actionNames: {},
         selectors: selectors,
         reducers: createReducer(resourceName)
@@ -516,7 +517,7 @@ function createAPIResource(_a) {
         }
         apiResource.actionNames = actionNames;
         // Create the worker saga
-        apiResource.actions[actionName] = createAPIAction({
+        apiResource.thunks[actionName] = createAPIAction({
             resourceName: resourceName,
             baseUrl: baseUrl,
             actionCreators: actionCreators,

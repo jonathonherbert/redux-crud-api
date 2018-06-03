@@ -296,7 +296,7 @@ describe('createAPIResource', () => {
       it('makes fetch requests and handles valid array responses', async () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', arrayResponse)
-        await store.dispatch(modelResource.actions.fetch({ resource }))
+        await store.dispatch<any>(modelResource.thunks.fetch({ resource }))
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         expect(actions[1]).toEqual(actionCreators.fetchSuccess(arrayResponse.data))
@@ -305,7 +305,9 @@ describe('createAPIResource', () => {
       it('makes fetch requests and applies transforms', async () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', arrayResponse)
-        const result = await store.dispatch(modelResourceWithTransforms.actions.fetch({ resource }))
+        const result = await store.dispatch<any>(
+          modelResourceWithTransforms.thunks.fetch({ resource })
+        )
 
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
@@ -320,7 +322,7 @@ describe('createAPIResource', () => {
       it('makes fetch requests and handles responses without an envelope', async () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', responseNoEnvelope)
-        await store.dispatch(modelResource.actions.fetch({ resource }))
+        await store.dispatch<any>(modelResource.thunks.fetch({ resource }))
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         expect(actions[1]).toEqual(actionCreators.fetchSuccess(responseNoEnvelope))
@@ -329,7 +331,7 @@ describe('createAPIResource', () => {
       it('makes fetch requests and makes appropriate calls if relations are defined', async () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', arrayResponse)
-        await store.dispatch(relationResource.actions.fetch({ resource }))
+        await store.dispatch<any>(relationResource.thunks.fetch({ resource }))
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         // The first dispatched action should be the normalised relation data
@@ -350,7 +352,7 @@ describe('createAPIResource', () => {
         fetchMock.mock('/api/model/1', 400)
         expect.assertions(3)
         try {
-          await store.dispatch(modelResource.actions.fetch({ resource }))
+          await store.dispatch<any>(modelResource.thunks.fetch({ resource }))
         } catch (e) {
           expect(e.message).toContain('400')
         }
@@ -369,7 +371,7 @@ describe('createAPIResource', () => {
           selectAuthToken
         })
         fetchMock.mock('/api/model/1', arrayResponse)
-        await store.dispatch(modelResourceWithAuth.actions.fetch({ resource }))
+        await store.dispatch<any>(modelResourceWithAuth.thunks.fetch({ resource }))
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         expect(actions[1]).toEqual(actionCreators.fetchSuccess(arrayResponse.data))
@@ -383,8 +385,8 @@ describe('createAPIResource', () => {
       it('makes fetch requests to arbitrary endpoints', async () => {
         const store = mockStore()
         fetchMock.mock('/api/recent/1', arrayResponse)
-        await store.dispatch(
-          modelResource.actions.fetch({
+        await store.dispatch<any>(
+          modelResource.thunks.fetch({
             resource,
             options: { endpoint: 'recent' }
           })
@@ -404,7 +406,7 @@ describe('createAPIResource', () => {
           }
         })
         fetchMock.mock('/api/model/1', response, { method: 'PUT' })
-        await store.dispatch(modelResource.actions.update({ resource }))
+        await store.dispatch<any>(modelResource.thunks.update({ resource }))
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.updateStart(resource))
         expect(actions[1]).toEqual(actionCreators.updateSuccess(response.data))
@@ -427,14 +429,14 @@ describe('createAPIResource', () => {
           response,
           { method: 'PUT' }
         )
-        await store.dispatch(modelResource.actions.update({ resource }))
+        await store.dispatch<any>(modelResource.thunks.update({ resource }))
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.updateStart({ ...resource, isMerged: true }))
       })
 
       it('should throw if the model being updated cannot be found in the local state', async () => {
         const store = mockStore()
-        return expect(() => store.dispatch(modelResource.actions.update({ resource }))).rejects
+        return expect(() => store.dispatch<any>(modelResource.thunks.update({ resource }))).rejects
       })
 
       it('makes update requests and apply transformations', async () => {
@@ -455,7 +457,7 @@ describe('createAPIResource', () => {
           { method: 'PUT' }
         )
 
-        await store.dispatch(modelResourceWithTransforms.actions.update({ resource }))
+        await store.dispatch<any>(modelResourceWithTransforms.thunks.update({ resource }))
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.updateStart(resource))
       })
@@ -478,7 +480,7 @@ describe('createAPIResource', () => {
           { method: 'PUT' }
         )
 
-        await store.dispatch(relationResource.actions.update({ resource }))
+        await store.dispatch<any>(relationResource.thunks.update({ resource }))
         const actions = store.getActions()
         // We expect the resource to update the relations and the model optimistically
         expect(actions[0]).toEqual(
@@ -512,7 +514,7 @@ describe('createAPIResource', () => {
         })
         fetchMock.mock('/api/model/1', 400, { method: 'PUT' })
         try {
-          await store.dispatch(modelResource.actions.update({ resource }))
+          await store.dispatch<any>(modelResource.thunks.update({ resource }))
         } catch (e) {
           expect(e.message).toContain('400')
         }
@@ -535,7 +537,9 @@ describe('createAPIResource', () => {
           resource,
           { method: 'POST' }
         )
-        await store.dispatch(modelResource.actions.create({ resource: { ...resource, id: 'cid' } }))
+        await store.dispatch<any>(
+          modelResource.thunks.create({ resource: { ...resource, id: 'cid' } })
+        )
 
         const actions = store.getActions()
         expect(actions[1]).toEqual(actionCreators.createSuccess(resource, 'cid'))
@@ -554,8 +558,8 @@ describe('createAPIResource', () => {
           { method: 'POST' }
         )
         try {
-          await store.dispatch(
-            modelResource.actions.create({ resource: { ...resource, id: 'cid' } })
+          await store.dispatch<any>(
+            modelResource.thunks.create({ resource: { ...resource, id: 'cid' } })
           )
         } catch (e) {
           expect(e.message).toContain('400')
@@ -576,7 +580,7 @@ describe('createAPIResource', () => {
           }
         })
         fetchMock.mock('/api/model/1', 200, { method: 'DELETE' })
-        await store.dispatch(modelResource.actions.del({ resource }))
+        await store.dispatch<any>(modelResource.thunks.del({ resource }))
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.deleteStart(resource))
         expect(actions[1]).toEqual(actionCreators.deleteSuccess(resource))
@@ -590,7 +594,7 @@ describe('createAPIResource', () => {
         })
         fetchMock.mock('/api/model/1', 400, { method: 'DELETE' })
         try {
-          await store.dispatch(modelResource.actions.del({ resource }))
+          await store.dispatch<any>(modelResource.thunks.del({ resource }))
         } catch (e) {
           expect(e.message).toContain('400')
         }
@@ -606,7 +610,7 @@ describe('createAPIResource', () => {
           }
         })
         fetchMock.mock('/api/model/1', 200, { method: 'DELETE' })
-        await store.dispatch(modelResourceWithTransforms.actions.del({ resource }))
+        await store.dispatch<any>(modelResourceWithTransforms.thunks.del({ resource }))
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.deleteStart(resource))
         expect(actions[1]).toEqual(actionCreators.deleteSuccess(resource))
@@ -629,7 +633,7 @@ describe('createAPIResource', () => {
         }
         const store = mockStore()
         fetchMock.mock('/api/model', searchResponse)
-        await store.dispatch(modelResource.actions.fetch({ resource: searchParams }))
+        await store.dispatch<any>(modelResource.thunks.fetch({ resource: searchParams }))
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(searchParams))
         expect(actions[1]).toEqual(actionCreators.fetchSuccess(searchResponse.data))
@@ -643,7 +647,7 @@ describe('createAPIResource', () => {
 
         const store = mockStore()
         fetchMock.mock('/api/model', response)
-        await store.dispatch(relationResource.actions.fetch({ resource: searchParams }))
+        await store.dispatch<any>(relationResource.thunks.fetch({ resource: searchParams }))
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(searchParams))
         expect(actions[1]).toEqual(
@@ -666,7 +670,7 @@ describe('createAPIResource', () => {
         const store = mockStore()
         fetchMock.mock('/api/model', 400)
         try {
-          await store.dispatch(relationResource.actions.fetch({ resource: searchParams }))
+          await store.dispatch<any>(relationResource.thunks.fetch({ resource: searchParams }))
         } catch (e) {
           expect(e.message).toContain('400')
         }

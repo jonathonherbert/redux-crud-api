@@ -272,7 +272,7 @@ describe("createAPIResource", function () {
                         case 0:
                             store = mockStore();
                             fetch_mock_1.default.mock("/api/model/1", arrayResponse);
-                            return [4 /*yield*/, store.dispatch(modelResource.actions.fetch({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(modelResource.thunks.fetch({ resource: resource }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -289,7 +289,7 @@ describe("createAPIResource", function () {
                         case 0:
                             store = mockStore();
                             fetch_mock_1.default.mock("/api/model/1", arrayResponse);
-                            return [4 /*yield*/, store.dispatch(modelResourceWithTransforms.actions.fetch({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(modelResourceWithTransforms.thunks.fetch({ resource: resource }))];
                         case 1:
                             result = _a.sent();
                             actions = store.getActions();
@@ -308,7 +308,7 @@ describe("createAPIResource", function () {
                         case 0:
                             store = mockStore();
                             fetch_mock_1.default.mock("/api/model/1", responseNoEnvelope);
-                            return [4 /*yield*/, store.dispatch(modelResource.actions.fetch({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(modelResource.thunks.fetch({ resource: resource }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -325,7 +325,7 @@ describe("createAPIResource", function () {
                         case 0:
                             store = mockStore();
                             fetch_mock_1.default.mock("/api/model/1", arrayResponse);
-                            return [4 /*yield*/, store.dispatch(relationResource.actions.fetch({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(relationResource.thunks.fetch({ resource: resource }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -352,7 +352,7 @@ describe("createAPIResource", function () {
                             _a.label = 1;
                         case 1:
                             _a.trys.push([1, 3, , 4]);
-                            return [4 /*yield*/, store.dispatch(modelResource.actions.fetch({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(modelResource.thunks.fetch({ resource: resource }))];
                         case 2:
                             _a.sent();
                             return [3 /*break*/, 4];
@@ -381,7 +381,7 @@ describe("createAPIResource", function () {
                                 selectAuthToken: selectAuthToken
                             });
                             fetch_mock_1.default.mock("/api/model/1", arrayResponse);
-                            return [4 /*yield*/, store.dispatch(modelResourceWithAuth.actions.fetch({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(modelResourceWithAuth.thunks.fetch({ resource: resource }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -401,7 +401,7 @@ describe("createAPIResource", function () {
                         case 0:
                             store = mockStore();
                             fetch_mock_1.default.mock("/api/recent/1", arrayResponse);
-                            return [4 /*yield*/, store.dispatch(modelResource.actions.fetch({
+                            return [4 /*yield*/, store.dispatch(modelResource.thunks.fetch({
                                     resource: resource,
                                     options: { endpoint: "recent" }
                                 }))];
@@ -427,7 +427,7 @@ describe("createAPIResource", function () {
                                 }
                             });
                             fetch_mock_1.default.mock("/api/model/1", response, { method: "PUT" });
-                            return [4 /*yield*/, store.dispatch(modelResource.actions.update({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(modelResource.thunks.update({ resource: resource }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -454,7 +454,7 @@ describe("createAPIResource", function () {
                                 expect(opts.body).toBe(JSON.stringify(__assign({}, resource, { isMerged: true })));
                                 return url === "/api/model/1";
                             }, response, { method: "PUT" });
-                            return [4 /*yield*/, store.dispatch(modelResource.actions.update({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(modelResource.thunks.update({ resource: resource }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -467,7 +467,7 @@ describe("createAPIResource", function () {
                 var store;
                 return __generator(this, function (_a) {
                     store = mockStore();
-                    return [2 /*return*/, expect(function () { return store.dispatch(modelResource.actions.update({ resource: resource })); }).rejects];
+                    return [2 /*return*/, expect(function () { return store.dispatch(modelResource.thunks.update({ resource: resource })); }).rejects];
                 });
             }); });
             it("makes update requests and apply transformations", function () { return __awaiter(_this, void 0, void 0, function () {
@@ -487,7 +487,7 @@ describe("createAPIResource", function () {
                                 expect(opts.body).toBe(JSON.stringify(transformOut(resource)));
                                 return url === "/api/model/1";
                             }, response, { method: "PUT" });
-                            return [4 /*yield*/, store.dispatch(modelResourceWithTransforms.actions.update({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(modelResourceWithTransforms.thunks.update({ resource: resource }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -513,7 +513,7 @@ describe("createAPIResource", function () {
                                 expect(opts.body).toBe(JSON.stringify(resource));
                                 return url === "/api/model/1";
                             }, response, { method: "PUT" });
-                            return [4 /*yield*/, store.dispatch(relationResource.actions.update({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(relationResource.thunks.update({ resource: resource }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -548,7 +548,7 @@ describe("createAPIResource", function () {
                             _a.label = 1;
                         case 1:
                             _a.trys.push([1, 3, , 4]);
-                            return [4 /*yield*/, store.dispatch(modelResource.actions.update({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(modelResource.thunks.update({ resource: resource }))];
                         case 2:
                             _a.sent();
                             return [3 /*break*/, 4];
@@ -578,7 +578,7 @@ describe("createAPIResource", function () {
                                 expect(options.body).toEqual(JSON.stringify(bodyContent));
                                 return url === "/api/model";
                             }, resource, { method: "POST" });
-                            return [4 /*yield*/, store.dispatch(modelResource.actions.create({ resource: __assign({}, resource, { id: "cid" }) }))];
+                            return [4 /*yield*/, store.dispatch(modelResource.thunks.create({ resource: __assign({}, resource, { id: "cid" }) }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -602,7 +602,7 @@ describe("createAPIResource", function () {
                             _a.label = 1;
                         case 1:
                             _a.trys.push([1, 3, , 4]);
-                            return [4 /*yield*/, store.dispatch(modelResource.actions.create({ resource: __assign({}, resource, { id: "cid" }) }))];
+                            return [4 /*yield*/, store.dispatch(modelResource.thunks.create({ resource: __assign({}, resource, { id: "cid" }) }))];
                         case 2:
                             _a.sent();
                             return [3 /*break*/, 4];
@@ -630,7 +630,7 @@ describe("createAPIResource", function () {
                                 }
                             });
                             fetch_mock_1.default.mock("/api/model/1", 200, { method: "DELETE" });
-                            return [4 /*yield*/, store.dispatch(modelResource.actions.del({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(modelResource.thunks.del({ resource: resource }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -654,7 +654,7 @@ describe("createAPIResource", function () {
                             _a.label = 1;
                         case 1:
                             _a.trys.push([1, 3, , 4]);
-                            return [4 /*yield*/, store.dispatch(modelResource.actions.del({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(modelResource.thunks.del({ resource: resource }))];
                         case 2:
                             _a.sent();
                             return [3 /*break*/, 4];
@@ -681,7 +681,7 @@ describe("createAPIResource", function () {
                                 }
                             });
                             fetch_mock_1.default.mock("/api/model/1", 200, { method: "DELETE" });
-                            return [4 /*yield*/, store.dispatch(modelResourceWithTransforms.actions.del({ resource: resource }))];
+                            return [4 /*yield*/, store.dispatch(modelResourceWithTransforms.thunks.del({ resource: resource }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -712,7 +712,7 @@ describe("createAPIResource", function () {
                             };
                             store = mockStore();
                             fetch_mock_1.default.mock("/api/model", searchResponse);
-                            return [4 /*yield*/, store.dispatch(modelResource.actions.fetch({ resource: searchParams }))];
+                            return [4 /*yield*/, store.dispatch(modelResource.thunks.fetch({ resource: searchParams }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -733,7 +733,7 @@ describe("createAPIResource", function () {
                             };
                             store = mockStore();
                             fetch_mock_1.default.mock("/api/model", response);
-                            return [4 /*yield*/, store.dispatch(relationResource.actions.fetch({ resource: searchParams }))];
+                            return [4 /*yield*/, store.dispatch(relationResource.thunks.fetch({ resource: searchParams }))];
                         case 1:
                             _a.sent();
                             actions = store.getActions();
@@ -761,7 +761,7 @@ describe("createAPIResource", function () {
                             _a.label = 1;
                         case 1:
                             _a.trys.push([1, 3, , 4]);
-                            return [4 /*yield*/, store.dispatch(relationResource.actions.fetch({ resource: searchParams }))];
+                            return [4 /*yield*/, store.dispatch(relationResource.thunks.fetch({ resource: searchParams }))];
                         case 2:
                             _a.sent();
                             return [3 /*break*/, 4];

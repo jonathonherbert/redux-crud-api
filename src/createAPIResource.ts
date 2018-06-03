@@ -62,27 +62,21 @@ interface ICreateAPIActionOptions {
   transformOut: (model: any) => any
 }
 
-interface IAPIActionOptions {
+export interface IAPIActionOptions {
   // The endpoint for requests.
-  endpoint: string
+  endpoint?: string
   // The content-type that should be set in request headers.
-  contentType: string
+  contentType?: string
 }
 
-interface IAPIAction {
-  payload: {
-    // The resource. This is named grossly right now.
-    // Really it's whatever params the op needs to work, e.g.
-    // an ID, search params, a whole model. The ambiguity is rubbish.
-    resource: any
-    options: IAPIActionOptions
-  }
-  meta: {
-    // The function called when the saga is done
-    resolve: (data: any) => any
-    reject: (reason: string) => any
-  }
+export interface IAPIActionParams {
+  resource: any
+  options?: IAPIActionOptions
 }
+
+export type IAPIActionCreator = (
+  params?: IAPIActionParams
+) => (dispatch: Dispatch<any>, getState: () => any) => Promise<any>
 
 /**
  * Get the request body for a given API action.
@@ -282,16 +276,13 @@ function createAPIAction({
   relations,
   transformIn,
   transformOut
-}: ICreateAPIActionOptions) {
+}: ICreateAPIActionOptions): IAPIActionCreator {
   /**
    * Generator for the given action.
    * Accepts FSA containing a payload with property 'resource' containing request data.
    * Dispatches start (if applicable) action, makes HTTP calls, dispatches success/error actions with result.
    */
-  return (payload: { resource: any; options: any }) => async (
-    dispatch: Dispatch<any>,
-    getState: () => any
-  ) => {
+  return (payload?: IAPIActionParams) => async (dispatch: Dispatch<any>, getState: () => any) => {
     // We store a client id here for optimistic creation
     let resource
     let options
@@ -647,7 +638,8 @@ function createAPIResource<IResource extends IBaseResource>({
   const selectors = createSelectors<IResource>(resourceName)
   const actionNames = reduxCrud.actionTypesFor(resourceName)
   const apiResource = {
-    actions: {} as { [action: string]: any },
+    thunks: {} as { [action: string]: IAPIActionCreator },
+    actions: actionCreators,
     actionNames: {} as { [actionName: string]: string },
     selectors,
     reducers: createReducer<IResource, TActions>(resourceName)
@@ -669,7 +661,7 @@ function createAPIResource<IResource extends IBaseResource>({
     apiResource.actionNames = actionNames
 
     // Create the worker saga
-    apiResource.actions[actionName] = createAPIAction({
+    apiResource.thunks[actionName] = createAPIAction({
       resourceName,
       baseUrl,
       actionCreators,
