@@ -9,12 +9,8 @@ import configureStore from 'redux-mock-store'
 import thunk from 'redux-thunk'
 
 import createAPIResource, { createActionCreators, createReducer } from './createAPIResource'
+import { createCipher } from 'crypto'
 
-let modelResource: any
-let modelResourceWithTransforms: any
-let relationResource: any
-let actionCreators: any
-let relationActionCreators: any
 const baseUrl = '/api'
 const resourceName = 'model'
 const errorMessage = 'HTTP Error: 400'
@@ -91,17 +87,17 @@ const normalisedModelData = normalize(resource, modelSchema)
 const reducer = createReducer(resourceName)
 
 // Unnormalised data
-modelResource = createAPIResource({ resourceName, baseUrl })
-modelResourceWithTransforms = createAPIResource({
+const modelResource = createAPIResource<typeof resource>({ resourceName, baseUrl })
+const modelResourceWithTransforms = createAPIResource({
   resourceName,
   baseUrl,
   options: { transformIn, transformOut }
 })
-actionCreators = createActionCreators(resourceName)
+const actionCreators = createActionCreators(resourceName)
 
 // Normalised data
-relationActionCreators = createActionCreators(resourceName)
-relationResource = createAPIResource({
+const relationActionCreators = createActionCreators(resourceName)
+const relationResource = createAPIResource({
   resourceName,
   baseUrl,
   relations: {
@@ -125,10 +121,15 @@ describe('createAPIResource', () => {
       ).toThrowError('not supported')
     })
   })
-
+  describe('Action names', () => {
+    it('should provide the relevant action names to the consumer', () => {
+      expect(modelResource.actionNames.createError).toEqual('MODEL_CREATE_ERROR')
+      expect(modelResource.actionNames.MODEL_CREATE_ERROR).toEqual('MODEL_CREATE_ERROR')
+    })
+  })
   describe('Reducer', () => {
     it('should add a lastFetch time when consuming SUCCESS actions', () => {
-      expect(reducer(undefined, actionCreators.fetchSuccess(resource)).lastFetch).toBe(1337)
+      expect(reducer(undefined, actionCreators.fetchSuccess(resource as any)).lastFetch).toBe(1337)
     })
   })
   describe('Selectors', () => {
@@ -347,7 +348,13 @@ describe('createAPIResource', () => {
       it('makes fetch requests and handles errors', async () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', 400)
-        await store.dispatch(modelResource.actions.fetch({ resource }))
+        expect.assertions(3)
+        try {
+          await store.dispatch(modelResource.actions.fetch({ resource }))
+        } catch (e) {
+          expect(e.message).toContain('400')
+        }
+
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         expect(actions[1]).toEqual(actionCreators.fetchError(errorMessage))
@@ -414,7 +421,7 @@ describe('createAPIResource', () => {
         fetchMock.mock(
           (url, opts) => {
             // Body doesn't exist on the typings here, but it should!
-            expect((opts as any).body).toBe(JSON.stringify(resource))
+            expect((opts as any).body).toBe(JSON.stringify({ ...resource, isMerged: true }))
             return url === '/api/model/1'
           },
           response,
@@ -504,7 +511,11 @@ describe('createAPIResource', () => {
           }
         })
         fetchMock.mock('/api/model/1', 400, { method: 'PUT' })
-        await store.dispatch(modelResource.actions.update({ resource }))
+        try {
+          await store.dispatch(modelResource.actions.update({ resource }))
+        } catch (e) {
+          expect(e.message).toContain('400')
+        }
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.updateStart(resource))
         expect(actions[1]).toEqual(actionCreators.updateError(errorMessage, resource))
@@ -542,7 +553,13 @@ describe('createAPIResource', () => {
           invalidAPIResponse,
           { method: 'POST' }
         )
-        await store.dispatch(modelResource.actions.create({ resource: { ...resource, id: 'cid' } }))
+        try {
+          await store.dispatch(
+            modelResource.actions.create({ resource: { ...resource, id: 'cid' } })
+          )
+        } catch (e) {
+          expect(e.message).toContain('400')
+        }
 
         const actions = store.getActions()
         expect(actions[1]).toEqual(
@@ -572,7 +589,11 @@ describe('createAPIResource', () => {
           }
         })
         fetchMock.mock('/api/model/1', 400, { method: 'DELETE' })
-        await store.dispatch(modelResource.actions.del({ resource }))
+        try {
+          await store.dispatch(modelResource.actions.del({ resource }))
+        } catch (e) {
+          expect(e.message).toContain('400')
+        }
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.deleteStart(resource))
         expect(actions[1]).toEqual(actionCreators.deleteError(errorMessage, resource))
@@ -644,7 +665,11 @@ describe('createAPIResource', () => {
 
         const store = mockStore()
         fetchMock.mock('/api/model', 400)
-        await store.dispatch(relationResource.actions.fetch({ resource: searchParams }))
+        try {
+          await store.dispatch(relationResource.actions.fetch({ resource: searchParams }))
+        } catch (e) {
+          expect(e.message).toContain('400')
+        }
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(searchParams))
         expect(actions[1]).toEqual(actionCreators.fetchError(errorMessage))

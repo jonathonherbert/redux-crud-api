@@ -66,8 +66,8 @@
     "uuid": "3.2.x",
     "whatwg-fetch": "2.x",
     "redux-batched-actions": "0.2.x",
+    "redux-crud": "3.2.0",
     "lodash": "4.x",
-    "redux-crud": "git://github.com/Versent/redux-crud.git#d558117",
     "normalizr": "3.x"
   },
   "devDependencies": {

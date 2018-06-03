@@ -427,6 +427,7 @@ function createAPIAction({
         // Methods that persist data require the resource to revert optimistic updates
         dispatch(actionCreators[crudAction + 'Error'](e.message, localResource))
       }
+      throw e
     }
   }
 }
@@ -446,15 +447,18 @@ function createSelectors<IResource extends IBaseResource>(mountPoint: string) {
     /**
      * @inheritdocs
      */
-    findById(state: any, id: string) {
+    findById(state: any, id: number | string) {
       return getLocalState(state).records[id] || null
     },
 
     /**
      * @inheritdocs
      */
-    findByCid(state: any, cid: string) {
-      return find(getLocalState(state).records, (item: { _cid?: string }) => item._cid === cid)
+    findByCid(state: any, cid: number | string) {
+      return find(
+        getLocalState(state).records,
+        (item: { _cid?: number | string }) => item._cid === cid
+      )
     },
 
     /**
@@ -486,22 +490,22 @@ function createSelectors<IResource extends IBaseResource>(mountPoint: string) {
       return getLocalState(state).records
     },
 
-    isResourceBusy(state: any, id: string) {
+    isResourceBusy(state: any, id: number | string) {
       const records = getLocalState(state).records
       return Object.keys(records).some(id => !!records[id].busy)
     },
 
-    isBusy(state: any, id: string) {
+    isBusy(state: any, id: number | string) {
       const record = getLocalState(state).records[id]
       return record ? !!record.busy : false
     },
 
-    isPendingUpdate(state: any, id: string) {
+    isPendingUpdate(state: any, id: number | string) {
       const record = getLocalState(state).records[id]
       return record ? !!record.pendingUpdate : false
     },
 
-    isPendingCreate(state: any, id: string) {
+    isPendingCreate(state: any, id: number | string) {
       const record = getLocalState(state).records[id]
       return record ? !!record.pendingCreate : false
     },
@@ -548,8 +552,8 @@ export interface ICreateAPIResourceOptions {
 }
 
 export interface IBaseResource {
-  id: string
-  _cid?: string
+  id: number | string
+  _cid?: number | string
   busy?: boolean
   pendingUpdate?: boolean
   pendingCreate?: boolean
