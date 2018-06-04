@@ -345,12 +345,9 @@ describe('createAPIResource', () => {
         expect(actions[1]).toEqual(
           batchActions([
             actionCreators.fetchSuccess(normalisedModelData.entities.relation[1]),
-            actionCreators.fetchSuccess(normalisedModelData.entities.relation[2])
+            actionCreators.fetchSuccess(normalisedModelData.entities.relation[2]),
+            actionCreators.fetchSuccess(normalisedModelData.entities.model[1])
           ])
-        )
-        // And the next should be the normalised model data
-        expect(actions[2]).toEqual(
-          batchActions([actionCreators.fetchSuccess(normalisedModelData.entities.model[1])])
         )
       })
 
@@ -493,21 +490,17 @@ describe('createAPIResource', () => {
         expect(actions[0]).toEqual(
           batchActions([
             relationActionCreators.updateStart(normalisedModelData.entities.relation[1]),
-            relationActionCreators.updateStart(normalisedModelData.entities.relation[2])
+            relationActionCreators.updateStart(normalisedModelData.entities.relation[2]),
+            actionCreators.updateStart(normalisedModelData.entities.model[1])
           ])
-        )
-        expect(actions[1]).toEqual(
-          batchActions([actionCreators.updateStart(normalisedModelData.entities.model[1])])
         )
 
-        expect(actions[2]).toEqual(
+        expect(actions[1]).toEqual(
           batchActions([
             actionCreators.updateSuccess(normalisedModelData.entities.relation[1], '1'),
-            actionCreators.updateSuccess(normalisedModelData.entities.relation[2], '2')
+            actionCreators.updateSuccess(normalisedModelData.entities.relation[2], '2'),
+            actionCreators.updateSuccess(normalisedModelData.entities.model[1], '1')
           ])
-        )
-        expect(actions[3]).toEqual(
-          batchActions([actionCreators.updateSuccess(normalisedModelData.entities.model[1], '1')])
         )
       })
 
@@ -660,11 +653,9 @@ describe('createAPIResource', () => {
         expect(actions[1]).toEqual(
           batchActions([
             actionCreators.fetchSuccess(normalisedModelData.entities.relation[1]),
-            actionCreators.fetchSuccess(normalisedModelData.entities.relation[2])
+            actionCreators.fetchSuccess(normalisedModelData.entities.relation[2]),
+            actionCreators.fetchSuccess(normalisedModelData.entities.model[1])
           ])
-        )
-        expect(actions[2]).toEqual(
-          batchActions([actionCreators.fetchSuccess(normalisedModelData.entities.model[1])])
         )
       })
 

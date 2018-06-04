@@ -340,6 +340,7 @@ function createAPIAction(_a) {
                             dispatch(actionCreators[crudAction + "Success"](data, cid));
                         }
                         else {
+                            console.log("success", data);
                             dispatch(actionCreators[crudAction + "Success"](data));
                         }
                     }

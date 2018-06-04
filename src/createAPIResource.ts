@@ -318,6 +318,7 @@ function createAPIAction({
       if (relations && (actionName === 'update' || actionName === 'create')) {
         const schema = Array.isArray(localResource) ? [relations.schema] : relations.schema
         const normalisedResource = normalize(localResource, schema)
+        const actions: any[] = []
         for (const i in relations.map) {
           const relationData = normalisedResource.entities[i]
           if (!relationData) {
@@ -327,7 +328,6 @@ function createAPIAction({
           // When we receive relation updates at the end of the action,
           // we can replay these keys in order to sync with optimistic updates.
           relationKeys[i] = []
-          const actions: any[] = []
 
           if (relationData.undefined) {
             console.warn(`One or more of the relations you\'re trying to ${actionName} is missing an id.\
@@ -337,8 +337,8 @@ function createAPIAction({
             relationKeys[i].push(id)
             actions.push(relations.map[i][crudAction + 'Start'](relationData[id]))
           })
-          dispatch(batchActions(actions))
         }
+        dispatch(batchActions(actions))
       } else {
         dispatch(actionCreators[crudAction + 'Start'](localResource))
       }
@@ -385,12 +385,13 @@ function createAPIAction({
           data,
           Array.isArray(data) ? [relations.schema] : relations.schema
         )
+        const actions: any[] = []
         for (const i in relations.map) {
           const relationData = normalisedData.entities[i]
           if (!relationData) {
             continue
           }
-          const actions: any[] = []
+
           Object.keys(relationData).forEach((id, index) => {
             if (crudAction === 'fetch') {
               actions.push(relations.map[i][crudAction + 'Success'](relationData[id]))
@@ -405,8 +406,14 @@ function createAPIAction({
               )
             }
           })
-          dispatch(batchActions(actions))
         }
+        if (!actions.length) {
+          // If we haven't received any data, add a single success event.
+          // This will ensure that busy indicators are reset etc., and any
+          // consumer code watching for success actions will fire as expected.
+          actions.push(actionCreators[crudAction + 'Success']())
+        }
+        dispatch(batchActions(actions))
       }
       // Once we're done, call resolve for the Promise caller
       return data
