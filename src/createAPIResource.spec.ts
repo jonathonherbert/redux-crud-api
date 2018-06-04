@@ -9,7 +9,6 @@ import thunk from 'redux-thunk'
 import 'whatwg-fetch'
 
 import createAPIResource, { createActionCreators, createReducer } from './createAPIResource'
-import { createCipher } from 'crypto'
 
 const baseUrl = '/api'
 const resourceName = 'model'
@@ -83,8 +82,9 @@ const modelSchema = new schema.Entity('model', {
   relations: [relationSchema]
 })
 
+const actionNames = reduxCrud.actionTypesFor(resourceName)
 const normalisedModelData = normalize(resource, modelSchema)
-const reducer = createReducer(resourceName)
+const reducer = createReducer(resourceName, actionNames)
 
 // Unnormalised data
 const modelResource = createAPIResource<typeof resource>({ resourceName, baseUrl })
@@ -130,6 +130,35 @@ describe('createAPIResource', () => {
   describe('Reducer', () => {
     it('should add a lastFetch time when consuming SUCCESS actions', () => {
       expect(reducer(undefined, actionCreators.fetchSuccess(resource as any)).lastFetch).toBe(1337)
+    })
+    it('should mark the state as busy when START actions are consumed', () => {
+      expect(reducer(undefined, actionCreators.fetchStart()).busy).toBe(true)
+    })
+    it('should mark the state as unbusy when SUCCESS actions are consumed and no records are busy', () => {
+      expect(
+        reducer(
+          {
+            records: {
+              1: { id: 1, busy: false }
+            },
+            lastFetch: 0,
+            busy: true
+          },
+          actionCreators.fetchStart()
+        ).busy
+      ).toBe(true)
+      expect(
+        reducer(
+          {
+            records: {
+              1: { id: 1, busy: false }
+            },
+            lastFetch: 0,
+            busy: true
+          },
+          actionCreators.fetchSuccess(arrayResponse.data)
+        ).busy
+      ).toBe(false)
     })
   })
   describe('Selectors', () => {
@@ -250,42 +279,20 @@ describe('createAPIResource', () => {
     })
     it('should have a selector that returns if any record is busy', () => {
       expect(
-        modelResource.selectors.isResourceBusy(
-          {
-            model: {
-              records: {
-                1: { busy: true }
-              }
-            }
-          },
-          1
-        )
+        modelResource.selectors.isResourceBusy({
+          model: {
+            records: {},
+            busy: true
+          }
+        })
       ).toBe(true)
       expect(
-        modelResource.selectors.isResourceBusy(
-          {
-            model: {
-              records: {
-                1: { busy: true },
-                2: { busy: false }
-              }
-            }
-          },
-          1
-        )
-      ).toBe(true)
-      expect(
-        modelResource.selectors.isResourceBusy(
-          {
-            model: {
-              records: {
-                1: { busy: false },
-                2: { busy: false }
-              }
-            }
-          },
-          1
-        )
+        modelResource.selectors.isResourceBusy({
+          model: {
+            records: {},
+            busy: false
+          }
+        })
       ).toBe(false)
     })
   })

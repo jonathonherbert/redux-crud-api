@@ -1,7 +1,6 @@
-import { ObjectIterator } from 'lodash';
-import { Schema } from 'normalizr';
-import { Dispatch } from 'redux';
-import 'whatwg-fetch';
+import { ObjectIterator } from "lodash";
+import { Schema } from "normalizr";
+import { Dispatch } from "redux";
 export declare const mapActionToCRUDAction: {
     create: string;
     del: string;
@@ -61,6 +60,7 @@ export interface IState<IResource extends IBaseResource> {
         [key: string]: IResource;
     };
     lastFetch: number | null;
+    busy: boolean;
 }
 /**
  * Create the reduce for the given resource.
@@ -68,7 +68,9 @@ export interface IState<IResource extends IBaseResource> {
 export declare const createReducer: <IResource extends IBaseResource, IAction extends {
     type: string;
     time?: number | undefined;
-}>(resourceName: string) => (state: IState<IResource> | undefined, action: IAction) => IState<IResource>;
+}>(resourceName: string, actionNames: {
+    [actionName: string]: string;
+}) => (state: IState<IResource> | undefined, action: IAction) => IState<IResource>;
 /**
  * Create the action creators for the given resource.
  *
@@ -242,7 +244,7 @@ declare function createAPIResource<IResource extends IBaseResource>({ resourceNa
         findAll(state: any): {
             [key: string]: IResource;
         };
-        isResourceBusy(state: any, id: string | number): boolean;
+        isResourceBusy(state: any): boolean;
         isBusy(state: any, id: string | number): boolean;
         isPendingUpdate(state: any, id: string | number): boolean;
         isPendingCreate(state: any, id: string | number): boolean;

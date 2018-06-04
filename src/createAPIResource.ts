@@ -480,9 +480,8 @@ function createSelectors<IResource extends IBaseResource>(mountPoint: string) {
       return getLocalState(state).records
     },
 
-    isResourceBusy(state: any, id: number | string) {
-      const records = getLocalState(state).records
-      return Object.keys(records).some(id => !!records[id].busy)
+    isResourceBusy(state: any) {
+      return getLocalState(state).busy
     },
 
     isBusy(state: any, id: number | string) {
@@ -552,11 +551,13 @@ export interface IBaseResource {
 export interface IState<IResource extends IBaseResource> {
   records: { [key: string]: IResource }
   lastFetch: number | null
+  busy: boolean
 }
 
 const initialState = {
   records: {},
-  lastFetch: null
+  lastFetch: null,
+  busy: false
 }
 
 /**
@@ -566,7 +567,8 @@ export const createReducer = <
   IResource extends IBaseResource,
   IAction extends { type: string; time?: number }
 >(
-  resourceName: string
+  resourceName: string,
+  actionNames: { [actionName: string]: string }
 ) => {
   const recordReducer = reduxCrud.Map.reducersFor(resourceName)
   return (state: IState<IResource> = initialState, action: IAction): IState<IResource> => {
@@ -574,8 +576,27 @@ export const createReducer = <
       ...state,
       records: recordReducer(state.records, action)
     }
-    if (action.type.indexOf('SUCCESS') !== -1 && action.time) {
-      newState.lastFetch = action.time
+    if (
+      action.type === actionNames.fetchStart ||
+      action.type === actionNames.createStart ||
+      action.type === actionNames.updateStart ||
+      action.type === actionNames.deleteStart
+    ) {
+      newState.busy = true
+    }
+    if (
+      action.type === actionNames.fetchSuccess ||
+      action.type === actionNames.createSuccess ||
+      action.type === actionNames.updateSuccess ||
+      action.type === actionNames.deleteSuccess
+    ) {
+      // If there are no records that are still busy, mark the resource as unbusy.
+      if (!Object.keys(state.records).some(id => state.records[id] && !!state.records[id].busy)) {
+        newState.busy = false
+      }
+      if (action.time) {
+        newState.lastFetch = action.time
+      }
     }
     return newState
   }
@@ -641,7 +662,7 @@ function createAPIResource<IResource extends IBaseResource>({
     actions: actionCreators,
     actionNames: {} as { [actionName: string]: string },
     selectors,
-    reducers: createReducer<IResource, TActions>(resourceName)
+    reducers: createReducer<IResource, TActions>(resourceName, actionNames)
   }
 
   // Create a resource for each of our actions
