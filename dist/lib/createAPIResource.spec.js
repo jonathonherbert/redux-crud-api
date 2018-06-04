@@ -343,10 +343,9 @@ describe('createAPIResource', function () {
                             // The first dispatched action should be the normalised relation data
                             expect(actions[1]).toEqual(redux_batched_actions_1.batchActions([
                                 actionCreators.fetchSuccess(normalisedModelData.entities.relation[1]),
-                                actionCreators.fetchSuccess(normalisedModelData.entities.relation[2])
+                                actionCreators.fetchSuccess(normalisedModelData.entities.relation[2]),
+                                actionCreators.fetchSuccess(normalisedModelData.entities.model[1])
                             ]));
-                            // And the next should be the normalised model data
-                            expect(actions[2]).toEqual(redux_batched_actions_1.batchActions([actionCreators.fetchSuccess(normalisedModelData.entities.model[1])]));
                             return [2 /*return*/];
                     }
                 });
@@ -530,14 +529,14 @@ describe('createAPIResource', function () {
                             // We expect the resource to update the relations and the model optimistically
                             expect(actions[0]).toEqual(redux_batched_actions_1.batchActions([
                                 relationActionCreators.updateStart(normalisedModelData.entities.relation[1]),
-                                relationActionCreators.updateStart(normalisedModelData.entities.relation[2])
+                                relationActionCreators.updateStart(normalisedModelData.entities.relation[2]),
+                                actionCreators.updateStart(normalisedModelData.entities.model[1])
                             ]));
-                            expect(actions[1]).toEqual(redux_batched_actions_1.batchActions([actionCreators.updateStart(normalisedModelData.entities.model[1])]));
-                            expect(actions[2]).toEqual(redux_batched_actions_1.batchActions([
+                            expect(actions[1]).toEqual(redux_batched_actions_1.batchActions([
                                 actionCreators.updateSuccess(normalisedModelData.entities.relation[1], '1'),
-                                actionCreators.updateSuccess(normalisedModelData.entities.relation[2], '2')
+                                actionCreators.updateSuccess(normalisedModelData.entities.relation[2], '2'),
+                                actionCreators.updateSuccess(normalisedModelData.entities.model[1], '1')
                             ]));
-                            expect(actions[3]).toEqual(redux_batched_actions_1.batchActions([actionCreators.updateSuccess(normalisedModelData.entities.model[1], '1')]));
                             return [2 /*return*/];
                     }
                 });
@@ -750,9 +749,9 @@ describe('createAPIResource', function () {
                             expect(actions[0]).toEqual(actionCreators.fetchStart(searchParams));
                             expect(actions[1]).toEqual(redux_batched_actions_1.batchActions([
                                 actionCreators.fetchSuccess(normalisedModelData.entities.relation[1]),
-                                actionCreators.fetchSuccess(normalisedModelData.entities.relation[2])
+                                actionCreators.fetchSuccess(normalisedModelData.entities.relation[2]),
+                                actionCreators.fetchSuccess(normalisedModelData.entities.model[1])
                             ]));
-                            expect(actions[2]).toEqual(redux_batched_actions_1.batchActions([actionCreators.fetchSuccess(normalisedModelData.entities.model[1])]));
                             return [2 /*return*/];
                     }
                 });
