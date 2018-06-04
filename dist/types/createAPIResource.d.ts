@@ -1,6 +1,6 @@
-import { ObjectIterator } from 'lodash';
-import { Schema } from 'normalizr';
-import { Dispatch } from 'redux';
+import { ObjectIterator } from "lodash";
+import { Schema } from "normalizr";
+import { Dispatch } from "redux";
 export declare const mapActionToCRUDAction: {
     create: string;
     del: string;

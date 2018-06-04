@@ -309,6 +309,15 @@ describe('createAPIResource', () => {
         expect(actions[1]).toEqual(actionCreators.fetchSuccess(arrayResponse.data))
       })
 
+      it('makes fetch requests and handles empty responses correctly', async () => {
+        const store = mockStore()
+        fetchMock.mock('/api/model/1', { data: [] })
+        await store.dispatch<any>(modelResource.thunks.fetch({ resource }))
+        const actions = store.getActions()
+        expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
+        expect(actions[1]).toEqual(actionCreators.fetchSuccess([]))
+      })
+
       it('makes fetch requests and applies transforms', async () => {
         const store = mockStore()
         fetchMock.mock('/api/model/1', arrayResponse)

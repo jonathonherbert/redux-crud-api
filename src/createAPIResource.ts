@@ -411,7 +411,7 @@ function createAPIAction({
           // If we haven't received any data, add a single success event.
           // This will ensure that busy indicators are reset etc., and any
           // consumer code watching for success actions will fire as expected.
-          actions.push(actionCreators[crudAction + 'Success']())
+          actions.push(actionCreators[crudAction + 'Success']([]))
         }
         dispatch(batchActions(actions))
       }
