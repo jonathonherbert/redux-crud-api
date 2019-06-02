@@ -1,7 +1,4 @@
-import noop from 'lodash/noop'
 import { normalize, schema } from 'normalizr'
-import * as qs from 'querystring'
-import { batchActions } from 'redux-batched-actions'
 import reduxCrud from 'redux-crud'
 import fetchMock from 'fetch-mock'
 import configureStore from 'redux-mock-store'
@@ -9,6 +6,7 @@ import thunk from 'redux-thunk'
 import 'whatwg-fetch'
 
 import createAPIResource, { createActionCreators, createReducer } from './createAPIResource'
+import { getActionsForNestedRelations } from './utils'
 
 const baseUrl = '/api'
 const resourceName = 'model'
@@ -103,7 +101,8 @@ const relationResource = createAPIResource({
   relations: {
     schema: modelSchema,
     map: { relation: relationActionCreators }
-  }
+  },
+  getActionsForRelations: getActionsForNestedRelations
 })
 
 describe('createAPIResource', () => {
@@ -352,11 +351,13 @@ describe('createAPIResource', () => {
         expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
         // The first dispatched action should be the normalised relation data
         expect(actions[1]).toEqual(
-          batchActions([
-            actionCreators.fetchSuccess(normalisedModelData.entities.relation[1]),
-            actionCreators.fetchSuccess(normalisedModelData.entities.relation[2]),
-            actionCreators.fetchSuccess(normalisedModelData.entities.model[1])
-          ])
+          actionCreators.fetchSuccess(normalisedModelData.entities.relation[1])
+        )
+        expect(actions[2]).toEqual(
+          actionCreators.fetchSuccess(normalisedModelData.entities.relation[2])
+        )
+        expect(actions[3]).toEqual(
+          actionCreators.fetchSuccess(normalisedModelData.entities.model[1])
         )
       })
 
@@ -390,7 +391,7 @@ describe('createAPIResource', () => {
         expect(actions[1]).toEqual(actionCreators.fetchSuccess(arrayResponse.data))
         expect(fetchMock.lastCall()[1].headers).toEqual(
           new Headers({
-            Authorization: 'Bearer token'
+            'x-auth-token': 'token'
           })
         )
       })
@@ -497,19 +498,23 @@ describe('createAPIResource', () => {
         const actions = store.getActions()
         // We expect the resource to update the relations and the model optimistically
         expect(actions[0]).toEqual(
-          batchActions([
-            relationActionCreators.updateStart(normalisedModelData.entities.relation[1]),
-            relationActionCreators.updateStart(normalisedModelData.entities.relation[2]),
-            actionCreators.updateStart(normalisedModelData.entities.model[1])
-          ])
+          relationActionCreators.updateStart(normalisedModelData.entities.relation[1])
+        )
+        expect(actions[1]).toEqual(
+          relationActionCreators.updateStart(normalisedModelData.entities.relation[2])
+        )
+        expect(actions[2]).toEqual(
+          actionCreators.updateStart(normalisedModelData.entities.model[1])
         )
 
-        expect(actions[1]).toEqual(
-          batchActions([
-            actionCreators.updateSuccess(normalisedModelData.entities.relation[1], '1'),
-            actionCreators.updateSuccess(normalisedModelData.entities.relation[2], '2'),
-            actionCreators.updateSuccess(normalisedModelData.entities.model[1], '1')
-          ])
+        expect(actions[3]).toEqual(
+          actionCreators.updateSuccess(normalisedModelData.entities.relation[1], '1')
+        )
+        expect(actions[4]).toEqual(
+          actionCreators.updateSuccess(normalisedModelData.entities.relation[2], '2')
+        )
+        expect(actions[5]).toEqual(
+          actionCreators.updateSuccess(normalisedModelData.entities.model[1], '1')
         )
       })
 
@@ -659,12 +664,15 @@ describe('createAPIResource', () => {
         await store.dispatch<any>(relationResource.thunks.fetch({ resource: searchParams }))
         const actions = store.getActions()
         expect(actions[0]).toEqual(actionCreators.fetchStart(searchParams))
+
         expect(actions[1]).toEqual(
-          batchActions([
-            actionCreators.fetchSuccess(normalisedModelData.entities.relation[1]),
-            actionCreators.fetchSuccess(normalisedModelData.entities.relation[2]),
-            actionCreators.fetchSuccess(normalisedModelData.entities.model[1])
-          ])
+          actionCreators.fetchSuccess(normalisedModelData.entities.relation[1])
+        )
+        expect(actions[2]).toEqual(
+          actionCreators.fetchSuccess(normalisedModelData.entities.relation[2])
+        )
+        expect(actions[3]).toEqual(
+          actionCreators.fetchSuccess(normalisedModelData.entities.model[1])
         )
       })
 
