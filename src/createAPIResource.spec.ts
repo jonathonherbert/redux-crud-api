@@ -6,7 +6,7 @@ import thunk from 'redux-thunk'
 import 'whatwg-fetch'
 
 import createAPIResource, { createActionCreators, createReducer } from './createAPIResource'
-import { getActionsForNestedRelations } from './utils'
+import { getActionsForNestedRelations, getActionsForFlattenedRelations } from './utils'
 
 const baseUrl = '/api'
 const resourceName = 'model'
@@ -18,6 +18,26 @@ const resource = {
   exampleData: 'exampleData',
   exampleJson: '{"key":"value"}',
   relations: [
+    {
+      id: 1,
+      name: 'relation1'
+    },
+    {
+      id: 2,
+      name: 'relation2'
+    }
+  ]
+}
+
+const flatResource = {
+  model: [
+    {
+      id: 1,
+      exampleData: 'exampleData',
+      exampleJson: '{"key":"value"}'
+    }
+  ],
+  relation: [
     {
       id: 1,
       name: 'relation1'
@@ -59,6 +79,10 @@ const response = {
 
 const arrayResponse = {
   data: [resource]
+}
+
+const flatResponse = {
+  data: flatResource
 }
 
 const responseNoEnvelope = [resource]
@@ -103,6 +127,17 @@ const relationResource = createAPIResource({
     map: { relation: relationActionCreators }
   },
   getActionsForRelations: getActionsForNestedRelations
+})
+
+// Normalised data
+const flatRelationResource = createAPIResource({
+  resourceName,
+  baseUrl,
+  relations: {
+    schema: modelSchema,
+    map: { relation: relationActionCreators }
+  },
+  getActionsForRelations: getActionsForFlattenedRelations
 })
 
 describe('createAPIResource', () => {
@@ -359,6 +394,18 @@ describe('createAPIResource', () => {
         expect(actions[3]).toEqual(
           actionCreators.fetchSuccess(normalisedModelData.entities.model[1])
         )
+      })
+
+      it('makes fetch requests and makes appropriate calls if flattened relations are supplied', async () => {
+        const store = mockStore()
+        fetchMock.mock('/api/model/1', flatResponse)
+        await store.dispatch<any>(flatRelationResource.thunks.fetch({ resource }))
+        const actions = store.getActions()
+        expect(actions[0]).toEqual(actionCreators.fetchStart(resource))
+        // The first dispatched action should be the normalised relation data
+        expect(actions[1]).toEqual(actionCreators.fetchSuccess(flatResponse.data.relation[0]))
+        expect(actions[2]).toEqual(actionCreators.fetchSuccess(flatResponse.data.relation[1]))
+        expect(actions[3]).toEqual(actionCreators.fetchSuccess(flatResponse.data.model[0]))
       })
 
       it('makes fetch requests and handles errors', async () => {

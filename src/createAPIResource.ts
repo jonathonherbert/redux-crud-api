@@ -362,6 +362,7 @@ function createAPIAction({
         transformIn
       })
       const actions = getActionsForIncomingData(getActionsForRelations)({
+        resourceName,
         relations,
         relationKeys,
         crudAction,
@@ -391,6 +392,7 @@ export interface IRelationMap {
 }
 
 export interface IActionOptions {
+  resourceName: string
   relations: IRelationMap
   relationKeys: IRelationKeys
   crudAction: TCrudActionTypes
